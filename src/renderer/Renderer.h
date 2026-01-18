@@ -4,6 +4,7 @@
 #include "core/Shader.h"
 #include "scene/Scene.h"
 #include <glm/glm.hpp>
+#include <glad/gl.h>
 #include <memory>
 
 struct Light {
@@ -17,10 +18,14 @@ struct Light {
 class Renderer {
 public:
     Renderer();
-    ~Renderer() = default;
+    ~Renderer();
 
-    void init();
+    void init(int width, int height);
     void render(const Scene& scene, const Camera& camera, float aspectRatio);
+    void resize(int width, int height);
+
+    // Picking - returns object index or -1 if nothing picked
+    int pick(const Scene& scene, const Camera& camera, float aspectRatio, int mouseX, int mouseY);
 
     void setClearColor(const glm::vec3& color) { m_clearColor = color; }
     const glm::vec3& getClearColor() const { return m_clearColor; }
@@ -32,7 +37,19 @@ public:
     const Light& getLight() const { return m_light; }
 
 private:
+    void initPickingFBO(int width, int height);
+    void cleanupPickingFBO();
+
     std::unique_ptr<Shader> m_meshShader;
+    std::unique_ptr<Shader> m_pickingShader;
+
+    // Picking framebuffer
+    GLuint m_pickingFBO{0};
+    GLuint m_pickingTexture{0};
+    GLuint m_pickingDepth{0};
+    int m_pickingWidth{0};
+    int m_pickingHeight{0};
+
     glm::vec3 m_clearColor{0.1f, 0.1f, 0.15f};
     Light m_light;
     bool m_wireframe{false};

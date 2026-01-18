@@ -9,7 +9,7 @@ Application::Application(int width, int height, const std::string& title)
 {
     m_window = std::make_unique<Window>(width, height, title);
     m_renderer = std::make_unique<Renderer>();
-    m_renderer->init();
+    m_renderer->init(width, height);
 
     setupCallbacks();
 }
@@ -36,12 +36,14 @@ void Application::setupCallbacks() {
     });
 }
 
-int Application::run(const std::string& meshPath) {
-    if (!meshPath.empty()) {
-        if (!loadMesh(meshPath)) {
-            std::cerr << "Failed to load mesh: " << meshPath << std::endl;
-            return 1;
+int Application::run(const std::vector<std::string>& meshPaths) {
+    for (const auto& path : meshPaths) {
+        if (!loadMesh(path)) {
+            std::cerr << "Failed to load mesh: " << path << std::endl;
         }
+    }
+
+    if (m_scene.getObjectCount() > 0) {
         focusOnScene();
     }
 
@@ -96,6 +98,30 @@ void Application::onMouseButton(int button, int action, int mods) {
         m_middleMouseDown = (action == GLFW_PRESS);
     } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
         m_rightMouseDown = (action == GLFW_PRESS);
+
+        // Perform picking on right-click press
+        if (action == GLFW_PRESS) {
+            double mouseX, mouseY;
+            m_window->getCursorPos(mouseX, mouseY);
+
+            int pickedIndex = m_renderer->pick(
+                m_scene, m_camera, m_window->getAspectRatio(),
+                static_cast<int>(mouseX), static_cast<int>(mouseY)
+            );
+
+            // Clear all selections first
+            for (const auto& obj : m_scene.getObjects()) {
+                obj->setSelected(false);
+            }
+
+            // Select the picked object
+            if (pickedIndex >= 0 && pickedIndex < static_cast<int>(m_scene.getObjectCount())) {
+                SceneObject* obj = m_scene.getObject(pickedIndex);
+                if (obj) {
+                    obj->setSelected(true);
+                }
+            }
+        }
     }
 
     m_window->getCursorPos(m_lastMouseX, m_lastMouseY);
@@ -123,8 +149,7 @@ void Application::onScroll(double xoffset, double yoffset) {
 }
 
 void Application::onResize(int width, int height) {
-    (void)width;
-    (void)height;
+    m_renderer->resize(width, height);
 }
 
 bool Application::loadMesh(const std::string& path) {
@@ -142,8 +167,29 @@ bool Application::loadMesh(const std::string& path) {
     auto mesh = std::make_shared<Mesh>();
     mesh->upload(meshData);
 
-    SceneObject* obj = m_scene.addObject("LoadedMesh");
+    // Extract filename from path for naming
+    std::string name = path;
+    size_t lastSlash = path.find_last_of("/\\");
+    if (lastSlash != std::string::npos) {
+        name = path.substr(lastSlash + 1);
+    }
+
+    SceneObject* obj = m_scene.addObject(name);
     obj->setMesh(mesh);
+
+    // Assign different colors to each object
+    static const glm::vec3 colors[] = {
+        {0.8f, 0.3f, 0.3f},  // Red
+        {0.3f, 0.8f, 0.3f},  // Green
+        {0.3f, 0.3f, 0.8f},  // Blue
+        {0.8f, 0.8f, 0.3f},  // Yellow
+        {0.8f, 0.3f, 0.8f},  // Magenta
+        {0.3f, 0.8f, 0.8f},  // Cyan
+        {0.8f, 0.6f, 0.3f},  // Orange
+        {0.6f, 0.3f, 0.8f},  // Purple
+    };
+    size_t colorIndex = (m_scene.getObjectCount() - 1) % 8;
+    obj->setColor(colors[colorIndex]);
 
     return true;
 }

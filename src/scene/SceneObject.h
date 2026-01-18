@@ -30,6 +30,9 @@ public:
     bool isVisible() const { return m_visible; }
     void setVisible(bool visible) { m_visible = visible; }
 
+    bool isSelected() const { return m_selected; }
+    void setSelected(bool selected) { m_selected = selected; }
+
     void draw() const;
     void drawWireframe() const;
 
@@ -49,4 +52,5 @@ private:
     BoundingBox m_localBounds;
     BoundingBox m_worldBounds;
     bool m_visible{true};
+    bool m_selected{false};
 };

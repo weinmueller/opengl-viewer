@@ -7,7 +7,8 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 ## Features
 
 - **Modern OpenGL 4.6** - Uses Direct State Access (DSA) for efficient GPU resource management
-- **OBJ Mesh Loading** - Load and display OBJ files with automatic normal handling
+- **OBJ Mesh Loading** - Load multiple OBJ files simultaneously with automatic normal handling
+- **Object Picking** - Click to select objects with visual highlight feedback
 - **Orbit Camera** - Intuitive camera controls for 3D navigation
 - **Blinn-Phong Lighting** - Realistic shading with directional light
 - **Wireframe Mode** - Toggle wireframe rendering for mesh inspection
@@ -31,7 +32,7 @@ sudo apt install cmake libgl-dev libglfw3-dev
 ## Building
 
 ```bash
-git clone https://github.com/yourusername/opengl-viewer.git
+git clone https://github.com/weinmueller/opengl-viewer.git
 cd opengl-viewer
 mkdir build && cd build
 cmake ..
@@ -41,11 +42,14 @@ make
 ## Usage
 
 ```bash
-# Run with a mesh file
+# Run with a single mesh file
 ./MeshViewer path/to/mesh.obj
 
-# Run with included sample
-./MeshViewer assets/meshes/cube.obj
+# Load multiple mesh files
+./MeshViewer mesh1.obj mesh2.obj mesh3.obj
+
+# Run with included samples
+./MeshViewer ../assets/meshes/sphere.obj ../assets/meshes/torus.obj
 ```
 
 ### Controls
@@ -54,6 +58,7 @@ make
 |-------|--------|
 | Left Mouse Drag | Orbit camera |
 | Middle Mouse Drag | Pan camera |
+| Right Click | Select object (click background to deselect) |
 | Scroll Wheel | Zoom in/out |
 | W | Toggle wireframe |
 | F | Focus on scene |
@@ -71,8 +76,10 @@ OpenGL/
 │   ├── scene/                # Scene graph, Objects
 │   └── mesh/                 # Mesh loading and GPU resources
 ├── shaders/
-│   ├── mesh.vert             # Vertex shader
-│   └── mesh.frag             # Fragment shader
+│   ├── mesh.vert             # Main vertex shader
+│   ├── mesh.frag             # Main fragment shader (Blinn-Phong)
+│   ├── picking.vert          # Object picking vertex shader
+│   └── picking.frag          # Object picking fragment shader
 ├── assets/
 │   └── meshes/               # Sample mesh files
 └── external/                 # Third-party libraries
@@ -80,8 +87,7 @@ OpenGL/
 
 ## Roadmap
 
-- [ ] Object picking and selection
-- [ ] Dear ImGui integration for GUI
+- [x] Object picking and selection
 - [ ] Parasolid CAD format support
 - [ ] Multi-threaded geometry loading
 - [ ] Frustum culling and LOD

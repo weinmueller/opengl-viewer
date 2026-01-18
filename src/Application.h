@@ -8,13 +8,14 @@
 #include "mesh/Mesh.h"
 #include <memory>
 #include <string>
+#include <vector>
 
 class Application {
 public:
     Application(int width, int height, const std::string& title);
     ~Application() = default;
 
-    int run(const std::string& meshPath = "");
+    int run(const std::vector<std::string>& meshPaths = {});
 
 private:
     void setupCallbacks();
