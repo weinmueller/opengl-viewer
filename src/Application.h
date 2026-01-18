@@ -31,6 +31,7 @@ private:
 
     bool loadMesh(const std::string& path);
     void focusOnScene();
+    void subdivideSelected(bool smooth);
 
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;

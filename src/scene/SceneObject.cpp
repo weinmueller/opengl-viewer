@@ -1,4 +1,6 @@
 #include "SceneObject.h"
+#include "geometry/Subdivision.h"
+#include <iostream>
 
 SceneObject::SceneObject(const std::string& name)
     : m_name(name)
@@ -12,6 +14,49 @@ void SceneObject::setMesh(std::shared_ptr<Mesh> mesh) {
         m_localBounds = BoundingBox(m_mesh->getMinBounds(), m_mesh->getMaxBounds());
         updateWorldBounds();
     }
+}
+
+void SceneObject::setMeshData(const MeshData& data) {
+    m_meshData = data;
+
+    // Also upload to GPU
+    m_mesh = std::make_shared<Mesh>();
+    m_mesh->upload(m_meshData);
+
+    m_localBounds = BoundingBox(m_mesh->getMinBounds(), m_mesh->getMaxBounds());
+    updateWorldBounds();
+
+    // Print mesh statistics
+    size_t numVertices = m_meshData.vertices.size();
+    size_t numTriangles = m_meshData.indices.size() / 3;
+    std::cout << "[" << m_name << "] Loaded - Vertices: " << numVertices
+              << ", Triangles: " << numTriangles << std::endl;
+}
+
+void SceneObject::subdivide(bool smooth) {
+    if (m_meshData.empty()) {
+        return;
+    }
+
+    // Apply subdivision
+    if (smooth) {
+        m_meshData = Subdivision::loopSubdivide(m_meshData);
+    } else {
+        m_meshData = Subdivision::midpointSubdivide(m_meshData);
+    }
+
+    // Re-upload to GPU
+    m_mesh = std::make_shared<Mesh>();
+    m_mesh->upload(m_meshData);
+
+    m_localBounds = BoundingBox(m_mesh->getMinBounds(), m_mesh->getMaxBounds());
+    updateWorldBounds();
+
+    // Print mesh statistics
+    size_t numVertices = m_meshData.vertices.size();
+    size_t numTriangles = m_meshData.indices.size() / 3;
+    std::cout << "[" << m_name << "] Vertices: " << numVertices
+              << ", Triangles: " << numTriangles << std::endl;
 }
 
 void SceneObject::setPosition(const glm::vec3& position) {

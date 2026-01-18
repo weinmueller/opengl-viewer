@@ -85,6 +85,12 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
             case GLFW_KEY_F:
                 focusOnScene();
                 break;
+            case GLFW_KEY_S:
+                subdivideSelected(true);  // Smooth subdivision
+                break;
+            case GLFW_KEY_D:
+                subdivideSelected(false); // Simple subdivision
+                break;
         }
     }
 }
@@ -164,9 +170,6 @@ bool Application::loadMesh(const std::string& path) {
         return false;
     }
 
-    auto mesh = std::make_shared<Mesh>();
-    mesh->upload(meshData);
-
     // Extract filename from path for naming
     std::string name = path;
     size_t lastSlash = path.find_last_of("/\\");
@@ -175,7 +178,7 @@ bool Application::loadMesh(const std::string& path) {
     }
 
     SceneObject* obj = m_scene.addObject(name);
-    obj->setMesh(mesh);
+    obj->setMeshData(meshData);
 
     // Assign different colors to each object
     static const glm::vec3 colors[] = {
@@ -201,5 +204,26 @@ void Application::focusOnScene() {
     m_camera.setTarget(center);
     if (radius > 0.0f) {
         m_camera.setDistance(radius * 2.5f);
+    }
+}
+
+void Application::subdivideSelected(bool smooth) {
+    bool anySubdivided = false;
+
+    // Subdivide selected objects, or all if none selected
+    for (const auto& obj : m_scene.getObjects()) {
+        if (obj->isSelected() && obj->canSubdivide()) {
+            obj->subdivide(smooth);
+            anySubdivided = true;
+        }
+    }
+
+    // If nothing was selected, subdivide all objects
+    if (!anySubdivided) {
+        for (const auto& obj : m_scene.getObjects()) {
+            if (obj->canSubdivide()) {
+                obj->subdivide(smooth);
+            }
+        }
     }
 }

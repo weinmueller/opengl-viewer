@@ -9,6 +9,7 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **Modern OpenGL 4.6** - Uses Direct State Access (DSA) for efficient GPU resource management
 - **OBJ Mesh Loading** - Load multiple OBJ files simultaneously with automatic normal handling
 - **Object Picking** - Click to select objects with visual highlight feedback
+- **Mesh Subdivision** - Loop subdivision (smooth) and midpoint subdivision with boundary preservation
 - **Orbit Camera** - Intuitive camera controls for 3D navigation
 - **Blinn-Phong Lighting** - Realistic shading with directional light
 - **Wireframe Mode** - Toggle wireframe rendering for mesh inspection
@@ -60,9 +61,13 @@ make
 | Middle Mouse Drag | Pan camera |
 | Right Click | Select object (click background to deselect) |
 | Scroll Wheel | Zoom in/out |
+| S | Subdivide mesh (Loop - smooth) |
+| D | Subdivide mesh (midpoint - keeps shape) |
 | W | Toggle wireframe |
 | F | Focus on scene |
 | ESC | Exit |
+
+Mesh statistics (vertices, triangles) are printed to the terminal after loading and subdivision.
 
 ## Project Structure
 
@@ -74,7 +79,8 @@ OpenGL/
 │   ├── core/                 # Window, Shader, Timer
 │   ├── renderer/             # Camera, Renderer
 │   ├── scene/                # Scene graph, Objects
-│   └── mesh/                 # Mesh loading and GPU resources
+│   ├── mesh/                 # Mesh loading and GPU resources
+│   └── geometry/             # Subdivision algorithms
 ├── shaders/
 │   ├── mesh.vert             # Main vertex shader
 │   ├── mesh.frag             # Main fragment shader (Blinn-Phong)
@@ -88,7 +94,9 @@ OpenGL/
 ## Roadmap
 
 - [x] Object picking and selection
-- [ ] Multi-threaded geometry loading
+- [x] Mesh subdivision (Loop and midpoint)
+- [ ] Performance optimization for large meshes (>1M triangles)
+- [ ] Multi-threaded geometry processing
 - [ ] Frustum culling and LOD
 - [ ] Material and texture support
 

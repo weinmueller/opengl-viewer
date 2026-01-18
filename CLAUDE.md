@@ -43,6 +43,9 @@ cd build && cmake .. && make
 - OBJ mesh loading (multiple files supported)
 - Object picking with right-click selection
 - Selection highlighting (orange tint)
+- Mesh subdivision (S = Loop smooth, D = midpoint)
+- Boundary-preserving subdivision (corners and edges kept)
+- Mesh statistics printed to terminal
 - Orbit camera (left mouse), pan (middle mouse), zoom (scroll)
 - Blinn-Phong lighting with directional light
 - Wireframe toggle (W key)
@@ -50,7 +53,13 @@ cd build && cmake .. && make
 
 ## Future Improvements
 
-### Phase 7: Multi-threaded Geometry Updates
+### Phase 7: Performance Optimization (>1M triangles)
+- [ ] Parallel subdivision using std::execution or OpenMP
+- [ ] Optimize adjacency building with better data structures
+- [ ] Reduce memory allocations during subdivision
+- [ ] Consider GPU-based subdivision (compute shaders)
+
+### Phase 8: Multi-threaded Geometry Updates
 - [ ] Implement GeometryBuffer for large pre-allocated storage
 - [ ] Add GeometryUpdate queue for thread-safe updates
 - [ ] Double-buffered geometry with fence synchronization
