@@ -88,7 +88,6 @@ OpenGL/
 ## Roadmap
 
 - [x] Object picking and selection
-- [ ] Parasolid CAD format support
 - [ ] Multi-threaded geometry loading
 - [ ] Frustum culling and LOD
 - [ ] Material and texture support

@@ -1,7 +1,7 @@
 # Claude Context - OpenGL Viewer
 
 ## Project Overview
-High-performance OpenGL 4.6 viewer designed for large, complex Parasolid CAD files. Built with a focus on fast parallel rendering and extensibility.
+High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built with a focus on fast parallel rendering and extensibility.
 
 ## Architecture
 
@@ -40,7 +40,9 @@ cd build && cmake .. && make
 ```
 
 ## Current Features
-- OBJ mesh loading
+- OBJ mesh loading (multiple files supported)
+- Object picking with right-click selection
+- Selection highlighting (orange tint)
 - Orbit camera (left mouse), pan (middle mouse), zoom (scroll)
 - Blinn-Phong lighting with directional light
 - Wireframe toggle (W key)
@@ -48,20 +50,7 @@ cd build && cmake .. && make
 
 ## Future Improvements
 
-### Phase 7: Object Picking
-- [ ] Implement color-based picking (render object IDs to framebuffer)
-- [ ] Add ray casting alternative for precise picking
-- [ ] Highlight selected objects
-- [ ] Display object info on selection
-
-### Phase 8: Parasolid Integration
-- [ ] Add Parasolid SDK dependency
-- [ ] Implement ParasolidLoader class
-- [ ] Tessellation quality settings
-- [ ] Handle B-rep to mesh conversion
-- [ ] Support assembly structures
-
-### Phase 9: Multi-threaded Geometry Updates
+### Phase 7: Multi-threaded Geometry Updates
 - [ ] Implement GeometryBuffer for large pre-allocated storage
 - [ ] Add GeometryUpdate queue for thread-safe updates
 - [ ] Double-buffered geometry with fence synchronization
@@ -76,7 +65,6 @@ cd build && cmake .. && make
 - [ ] Persistent mapped buffers for streaming updates
 
 ### Additional Features
-- [ ] Multiple mesh loading
 - [ ] Material support (MTL files)
 - [ ] Texture mapping
 - [ ] Screenshot export (PNG)
