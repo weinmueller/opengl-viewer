@@ -1,7 +1,7 @@
-# Claude Context - OpenGL Mesh Viewer
+# Claude Context - OpenGL Viewer
 
 ## Project Overview
-High-performance OpenGL 4.6 mesh viewer designed for large, complex Parasolid CAD files. Built with a focus on fast parallel rendering and extensibility.
+High-performance OpenGL 4.6 viewer designed for large, complex Parasolid CAD files. Built with a focus on fast parallel rendering and extensibility.
 
 ## Architecture
 

@@ -1,6 +1,6 @@
-# OpenGL Mesh Viewer
+# OpenGL Viewer
 
-A high-performance OpenGL 4.6 mesh viewer designed for visualizing large CAD models. Built with modern C++17 and optimized for rendering complex geometry.
+A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. Built with modern C++17 and optimized for rendering complex geometry.
 
 ## Features
 
@@ -39,8 +39,8 @@ sudo pacman -S cmake mesa glfw
 ## Building
 
 ```bash
-git clone https://github.com/yourusername/opengl-mesh-viewer.git
-cd opengl-mesh-viewer
+git clone https://github.com/yourusername/opengl-viewer.git
+cd opengl-viewer
 mkdir build && cd build
 cmake ..
 make
