@@ -1,5 +1,7 @@
 # OpenGL Viewer
 
+IMPORTANT NOTE: Done with claude AI.
+
 A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. Built with modern C++17 and optimized for rendering complex geometry.
 
 ## Features
@@ -24,16 +26,6 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 ### Ubuntu/Debian
 ```bash
 sudo apt install cmake libgl-dev libglfw3-dev
-```
-
-### Fedora
-```bash
-sudo dnf install cmake mesa-libGL-devel glfw-devel
-```
-
-### Arch Linux
-```bash
-sudo pacman -S cmake mesa glfw
 ```
 
 ## Building
