@@ -29,7 +29,7 @@ target_include_directories(glad PUBLIC
 # GLM (header-only)
 add_library(glm INTERFACE)
 target_include_directories(glm INTERFACE
-    ${CMAKE_SOURCE_DIR}/external/glm
+    ${CMAKE_SOURCE_DIR}/external
 )
 
 # tinyobjloader (header-only implementation)
@@ -49,7 +49,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/external/glad/include
-    ${CMAKE_SOURCE_DIR}/external/glm
+    ${CMAKE_SOURCE_DIR}/external
     ${CMAKE_SOURCE_DIR}/external/tinyobjloader
 )
 
