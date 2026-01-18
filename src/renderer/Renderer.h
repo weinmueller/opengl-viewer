@@ -23,6 +23,7 @@ public:
     void render(const Scene& scene, const Camera& camera, float aspectRatio);
 
     void setClearColor(const glm::vec3& color) { m_clearColor = color; }
+    const glm::vec3& getClearColor() const { return m_clearColor; }
     void setWireframe(bool wireframe) { m_wireframe = wireframe; }
     bool isWireframe() const { return m_wireframe; }
     void toggleWireframe() { m_wireframe = !m_wireframe; }

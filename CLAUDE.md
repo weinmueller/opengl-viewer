@@ -54,22 +54,14 @@ cd build && cmake .. && make
 - [ ] Highlight selected objects
 - [ ] Display object info on selection
 
-### Phase 8: Dear ImGui Integration
-- [ ] Add ImGui as external dependency
-- [ ] Create dockable UI panels
-- [ ] Scene hierarchy panel
-- [ ] Object properties panel (transform, color)
-- [ ] Rendering settings (lighting, wireframe, culling)
-- [ ] Performance stats overlay
-
-### Phase 9: Parasolid Integration
+### Phase 8: Parasolid Integration
 - [ ] Add Parasolid SDK dependency
 - [ ] Implement ParasolidLoader class
 - [ ] Tessellation quality settings
 - [ ] Handle B-rep to mesh conversion
 - [ ] Support assembly structures
 
-### Phase 10: Multi-threaded Geometry Updates
+### Phase 9: Multi-threaded Geometry Updates
 - [ ] Implement GeometryBuffer for large pre-allocated storage
 - [ ] Add GeometryUpdate queue for thread-safe updates
 - [ ] Double-buffered geometry with fence synchronization
@@ -102,4 +94,3 @@ cd build && cmake .. && make
 - Add new loaders: Inherit from `MeshLoader`, register in `MeshLoader::createForFile()`
 - Add rendering features: Modify `Renderer::render()` and shaders
 - Add input handling: Use callbacks in `Application::setupCallbacks()`
-- Add GUI: Integrate ImGui in `Application::render()` after scene rendering
