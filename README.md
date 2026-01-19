@@ -12,6 +12,7 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **Mesh Subdivision** - Loop subdivision (smooth) and midpoint subdivision with crease/boundary preservation
 - **Parallel Processing** - OpenMP-accelerated subdivision for large meshes (4-5x speedup)
 - **GPU Double-Buffering** - Fence-synchronized buffer swapping for smooth geometry updates
+- **Back-face Culling** - Toggleable culling for ~50% faster rendering on closed meshes
 - **Orbit Camera** - Intuitive camera controls for 3D navigation
 - **Blinn-Phong Lighting** - Realistic shading with directional light
 - **Wireframe Mode** - Toggle wireframe rendering for mesh inspection
@@ -80,6 +81,7 @@ make
 | S | Subdivide mesh (Loop - smooth) |
 | D | Subdivide mesh (midpoint - keeps shape) |
 | W | Toggle wireframe |
+| C | Toggle back-face culling |
 | F | Focus on scene |
 | ESC | Exit |
 
@@ -113,8 +115,11 @@ OpenGL/
 - [x] Mesh subdivision (Loop and midpoint)
 - [x] Parallel subdivision with OpenMP
 - [x] GPU double-buffering for geometry updates
+- [x] Back-face culling with toggle
+- [x] Cached normal matrix optimization
+- [ ] Object-level frustum culling
 - [ ] GPU-based subdivision (compute shaders)
-- [ ] Frustum culling and LOD
+- [ ] LOD (Level of Detail) system
 - [ ] Material and texture support
 
 ## Third-Party Libraries

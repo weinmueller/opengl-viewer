@@ -68,6 +68,13 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     glClearColor(m_clearColor.r, m_clearColor.g, m_clearColor.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Apply backface culling setting
+    if (m_backfaceCulling) {
+        glEnable(GL_CULL_FACE);
+    } else {
+        glDisable(GL_CULL_FACE);
+    }
+
     m_meshShader->use();
 
     glm::mat4 view = camera.getViewMatrix();
@@ -99,8 +106,7 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
         }
         m_meshShader->setVec3("objectColor", color);
 
-        glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(obj->getModelMatrix())));
-        m_meshShader->setMat3("normalMatrix", normalMatrix);
+        m_meshShader->setMat3("normalMatrix", obj->getNormalMatrix());
 
         if (m_wireframe) {
             obj->drawWireframe();

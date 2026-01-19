@@ -57,6 +57,7 @@ cd build && cmake .. && make
 - Orbit camera (left mouse), pan (middle mouse), zoom (scroll)
 - Blinn-Phong lighting with directional light
 - Wireframe toggle (W key)
+- Back-face culling toggle (C key) for performance vs. mesh compatibility
 - Focus on scene (F key)
 
 ## Future Improvements
@@ -64,8 +65,10 @@ cd build && cmake .. && make
 ### Performance Optimizations
 - [x] Parallel subdivision using OpenMP
 - [x] Double-buffered geometry with fence synchronization
+- [x] Back-face culling (toggle with C key)
+- [x] Cached normal matrix (avoids per-frame inverse computation)
+- [ ] Object-level frustum culling (skip objects outside camera view)
 - [ ] GPU-based subdivision (compute shaders)
-- [ ] Implement frustum culling (`src/renderer/Frustum.h`)
 - [ ] Add `glMultiDrawElementsIndirect` for batched rendering
 - [ ] Implement LOD (Level of Detail) system
 - [ ] Add occlusion culling for complex scenes

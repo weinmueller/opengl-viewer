@@ -33,6 +33,10 @@ public:
     bool isWireframe() const { return m_wireframe; }
     void toggleWireframe() { m_wireframe = !m_wireframe; }
 
+    void setBackfaceCulling(bool enabled) { m_backfaceCulling = enabled; }
+    bool isBackfaceCulling() const { return m_backfaceCulling; }
+    void toggleBackfaceCulling() { m_backfaceCulling = !m_backfaceCulling; }
+
     Light& getLight() { return m_light; }
     const Light& getLight() const { return m_light; }
 
@@ -53,4 +57,5 @@ private:
     glm::vec3 m_clearColor{0.1f, 0.1f, 0.15f};
     Light m_light;
     bool m_wireframe{false};
+    bool m_backfaceCulling{true};
 };

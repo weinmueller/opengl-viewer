@@ -95,6 +95,9 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
             case GLFW_KEY_D:
                 subdivideSelected(false); // Simple subdivision
                 break;
+            case GLFW_KEY_C:
+                m_renderer->toggleBackfaceCulling();
+                break;
         }
     }
 }

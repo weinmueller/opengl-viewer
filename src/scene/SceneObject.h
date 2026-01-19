@@ -30,6 +30,7 @@ public:
     const glm::vec3& getColor() const { return m_color; }
 
     const glm::mat4& getModelMatrix() const { return m_modelMatrix; }
+    const glm::mat3& getNormalMatrix() const { return m_normalMatrix; }
     const BoundingBox& getWorldBounds() const { return m_worldBounds; }
     Mesh* getMesh() const { return m_mesh.get(); }
 
@@ -59,6 +60,7 @@ private:
     glm::vec3 m_color{0.8f, 0.8f, 0.8f};
 
     glm::mat4 m_modelMatrix{1.0f};
+    glm::mat3 m_normalMatrix{1.0f};
     BoundingBox m_localBounds;
     BoundingBox m_worldBounds;
     bool m_visible{true};

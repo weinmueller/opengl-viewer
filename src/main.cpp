@@ -6,10 +6,21 @@
 
 void printUsage(const char* progName) {
     std::cout << "Usage: " << progName << " [options] [mesh files...]\n"
-              << "Options:\n"
+              << "\nOptions:\n"
               << "  --angle <degrees>  Crease angle threshold for subdivision (default: 30)\n"
               << "                     Edges with dihedral angle > threshold are kept sharp\n"
-              << "  --help             Show this help message\n";
+              << "  --help             Show this help message\n"
+              << "\nControls:\n"
+              << "  Left Mouse Drag    Orbit camera\n"
+              << "  Middle Mouse Drag  Pan camera\n"
+              << "  Right Click        Select object\n"
+              << "  Scroll Wheel       Zoom in/out\n"
+              << "  S                  Subdivide (Loop - smooth)\n"
+              << "  D                  Subdivide (midpoint)\n"
+              << "  W                  Toggle wireframe\n"
+              << "  C                  Toggle back-face culling\n"
+              << "  F                  Focus on scene\n"
+              << "  ESC                Exit\n";
 }
 
 int main(int argc, char* argv[]) {

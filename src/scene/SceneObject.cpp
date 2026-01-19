@@ -84,6 +84,9 @@ void SceneObject::updateModelMatrix() {
     m_modelMatrix = glm::rotate(m_modelMatrix, glm::radians(m_rotation.y), glm::vec3(0, 1, 0));
     m_modelMatrix = glm::rotate(m_modelMatrix, glm::radians(m_rotation.z), glm::vec3(0, 0, 1));
     m_modelMatrix = glm::scale(m_modelMatrix, m_scale);
+
+    // Cache normal matrix (expensive inverse only when transform changes)
+    m_normalMatrix = glm::transpose(glm::inverse(glm::mat3(m_modelMatrix)));
 }
 
 void SceneObject::updateWorldBounds() {
