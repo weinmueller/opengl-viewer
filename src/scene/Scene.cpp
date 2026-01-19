@@ -26,6 +26,12 @@ void Scene::clear() {
     m_objects.clear();
 }
 
+void Scene::update() {
+    for (auto& obj : m_objects) {
+        obj->update();
+    }
+}
+
 SceneObject* Scene::getObject(size_t index) const {
     if (index < m_objects.size()) {
         return m_objects[index].get();

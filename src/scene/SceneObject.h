@@ -42,6 +42,9 @@ public:
     void draw() const;
     void drawWireframe() const;
 
+    // Call each frame to check for completed async GPU uploads
+    void update();
+
 private:
     void updateModelMatrix();
     void updateWorldBounds();

@@ -1,5 +1,7 @@
 #include "Subdivision.h"
 #include <cmath>
+#include <omp.h>
+#include <algorithm>
 
 uint32_t Subdivision::getEdgeMidpoint(
     const MeshData& input,
@@ -78,93 +80,152 @@ MeshData Subdivision::midpointSubdivide(const MeshData& input) {
 
 MeshData Subdivision::loopSubdivide(const MeshData& input, float creaseAngleThreshold) {
     // First, weld vertices by position to ensure proper adjacency
-    // This handles meshes where vertices are split for per-face normals
     MeshData welded = weldVertices(input);
+
+    const size_t numVertices = welded.vertices.size();
+    const size_t numFaces = welded.indices.size() / 3;
+    const float cosThreshold = std::cos(creaseAngleThreshold * 3.14159265f / 180.0f);
 
     MeshData output;
 
-    // Build adjacency information
-    // For each vertex, store its neighbors
-    std::vector<std::vector<uint32_t>> vertexNeighbors(welded.vertices.size());
+    // ========== PHASE 1: Parallel face normal computation ==========
+    std::vector<glm::vec3> faceNormals(numFaces);
 
-    // For each edge, store the opposite vertices of adjacent triangles
-    std::unordered_map<EdgeKey, std::vector<uint32_t>, EdgeKeyHash> edgeOpposites;
-
-    // Store face normals for each triangle (indexed by triangle index / 3)
-    std::vector<glm::vec3> faceNormals;
-    faceNormals.reserve(welded.indices.size() / 3);
-
-    // Map edge to the face indices it belongs to
-    std::unordered_map<EdgeKey, std::vector<size_t>, EdgeKeyHash> edgeFaces;
-
-    // Build adjacency from triangles
-    for (size_t i = 0; i < welded.indices.size(); i += 3) {
+    #pragma omp parallel for schedule(static)
+    for (size_t f = 0; f < numFaces; ++f) {
+        size_t i = f * 3;
         uint32_t i0 = welded.indices[i];
         uint32_t i1 = welded.indices[i + 1];
         uint32_t i2 = welded.indices[i + 2];
 
-        size_t faceIdx = i / 3;
-
-        // Compute face normal
         glm::vec3 v0 = welded.vertices[i0].position;
         glm::vec3 v1 = welded.vertices[i1].position;
         glm::vec3 v2 = welded.vertices[i2].position;
-        glm::vec3 faceNormal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
-        faceNormals.push_back(faceNormal);
-
-        // Add neighbors
-        auto addNeighbor = [&](uint32_t v, uint32_t n) {
-            auto& neighbors = vertexNeighbors[v];
-            if (std::find(neighbors.begin(), neighbors.end(), n) == neighbors.end()) {
-                neighbors.push_back(n);
-            }
-        };
-
-        addNeighbor(i0, i1); addNeighbor(i0, i2);
-        addNeighbor(i1, i0); addNeighbor(i1, i2);
-        addNeighbor(i2, i0); addNeighbor(i2, i1);
-
-        // Store opposite vertices for edges
-        edgeOpposites[EdgeKey(i0, i1)].push_back(i2);
-        edgeOpposites[EdgeKey(i1, i2)].push_back(i0);
-        edgeOpposites[EdgeKey(i2, i0)].push_back(i1);
-
-        // Store face index for each edge
-        edgeFaces[EdgeKey(i0, i1)].push_back(faceIdx);
-        edgeFaces[EdgeKey(i1, i2)].push_back(faceIdx);
-        edgeFaces[EdgeKey(i2, i0)].push_back(faceIdx);
+        faceNormals[f] = glm::normalize(glm::cross(v1 - v0, v2 - v0));
     }
 
-    // Identify sharp/crease edges based on dihedral angle
-    std::unordered_map<EdgeKey, bool, EdgeKeyHash> isSharpEdge;
-    float cosThreshold = std::cos(creaseAngleThreshold * 3.14159265f / 180.0f);
+    // ========== PHASE 2: Parallel adjacency collection ==========
+    int numThreads = omp_get_max_threads();
+    std::vector<ThreadLocalAdjacency> threadLocalData(numThreads);
 
-    for (const auto& [edge, faces] : edgeFaces) {
-        if (faces.size() == 1) {
-            // Boundary edge - always sharp
-            isSharpEdge[edge] = true;
-        } else if (faces.size() == 2) {
-            // Compute dihedral angle between the two faces
-            glm::vec3 n0 = faceNormals[faces[0]];
-            glm::vec3 n1 = faceNormals[faces[1]];
-            float cosAngle = glm::dot(n0, n1);
+    // Pre-allocate thread-local storage
+    size_t facesPerThread = (numFaces + numThreads - 1) / numThreads;
+    for (auto& tld : threadLocalData) {
+        tld.reserve(facesPerThread);
+    }
 
-            // If angle between normals > threshold, it's a sharp edge
-            // cos(angle) < cos(threshold) means angle > threshold
-            isSharpEdge[edge] = (cosAngle < cosThreshold);
+    #pragma omp parallel
+    {
+        int tid = omp_get_thread_num();
+        ThreadLocalAdjacency& local = threadLocalData[tid];
+
+        #pragma omp for schedule(static)
+        for (size_t f = 0; f < numFaces; ++f) {
+            size_t i = f * 3;
+            uint32_t i0 = welded.indices[i];
+            uint32_t i1 = welded.indices[i + 1];
+            uint32_t i2 = welded.indices[i + 2];
+
+            // Neighbor pairs (vertex, neighbor)
+            local.neighborPairs.emplace_back(i0, i1);
+            local.neighborPairs.emplace_back(i0, i2);
+            local.neighborPairs.emplace_back(i1, i0);
+            local.neighborPairs.emplace_back(i1, i2);
+            local.neighborPairs.emplace_back(i2, i0);
+            local.neighborPairs.emplace_back(i2, i1);
+
+            // Edge opposite pairs (edge, opposite vertex)
+            local.edgeOppositePairs.emplace_back(EdgeKey(i0, i1), i2);
+            local.edgeOppositePairs.emplace_back(EdgeKey(i1, i2), i0);
+            local.edgeOppositePairs.emplace_back(EdgeKey(i2, i0), i1);
+
+            // Edge face pairs (edge, face index)
+            local.edgeFacePairs.emplace_back(EdgeKey(i0, i1), f);
+            local.edgeFacePairs.emplace_back(EdgeKey(i1, i2), f);
+            local.edgeFacePairs.emplace_back(EdgeKey(i2, i0), f);
         }
     }
 
-    // Identify crease/boundary vertices and their crease neighbors
-    std::vector<bool> isCreaseVertex(welded.vertices.size(), false);
-    std::vector<std::vector<uint32_t>> creaseNeighbors(welded.vertices.size());
+    // ========== PHASE 3: Merge thread-local data into global structures ==========
+    std::vector<std::vector<uint32_t>> vertexNeighbors(numVertices);
+    std::unordered_map<EdgeKey, std::vector<uint32_t>, EdgeKeyHash> edgeOpposites;
+    std::unordered_map<EdgeKey, std::vector<size_t>, EdgeKeyHash> edgeFaces;
 
-    for (const auto& [edge, isSharp] : isSharpEdge) {
-        if (isSharp) {
+    // Reserve space in maps based on expected edges (~1.5 * numFaces for manifold mesh)
+    edgeOpposites.reserve(numFaces * 2);
+    edgeFaces.reserve(numFaces * 2);
+
+    // Merge neighbor pairs
+    for (const auto& tld : threadLocalData) {
+        for (const auto& [vertex, neighbor] : tld.neighborPairs) {
+            auto& neighbors = vertexNeighbors[vertex];
+            if (std::find(neighbors.begin(), neighbors.end(), neighbor) == neighbors.end()) {
+                neighbors.push_back(neighbor);
+            }
+        }
+    }
+
+    // Merge edge opposite pairs
+    for (const auto& tld : threadLocalData) {
+        for (const auto& [edge, opposite] : tld.edgeOppositePairs) {
+            edgeOpposites[edge].push_back(opposite);
+        }
+    }
+
+    // Merge edge face pairs
+    for (const auto& tld : threadLocalData) {
+        for (const auto& [edge, faceIdx] : tld.edgeFacePairs) {
+            edgeFaces[edge].push_back(faceIdx);
+        }
+    }
+
+    // Clear thread-local data to free memory
+    threadLocalData.clear();
+    threadLocalData.shrink_to_fit();
+
+    // ========== PHASE 4: Build unique edge list for parallel processing ==========
+    std::vector<EdgeKey> uniqueEdges;
+    uniqueEdges.reserve(edgeFaces.size());
+    for (const auto& [edge, faces] : edgeFaces) {
+        uniqueEdges.push_back(edge);
+    }
+
+    // ========== PHASE 5: Sharp edge detection (sequential for map safety) ==========
+    std::vector<bool> edgeIsSharp(uniqueEdges.size(), false);
+
+    for (size_t e = 0; e < uniqueEdges.size(); ++e) {
+        const EdgeKey& edge = uniqueEdges[e];
+        const auto& faces = edgeFaces.at(edge);
+
+        if (faces.size() == 1) {
+            // Boundary edge - always sharp
+            edgeIsSharp[e] = true;
+        } else if (faces.size() == 2) {
+            // Compute dihedral angle
+            glm::vec3 n0 = faceNormals[faces[0]];
+            glm::vec3 n1 = faceNormals[faces[1]];
+            float cosAngle = glm::dot(n0, n1);
+            edgeIsSharp[e] = (cosAngle < cosThreshold);
+        }
+    }
+
+    // Build map for fast sharp edge lookup
+    std::unordered_map<EdgeKey, bool, EdgeKeyHash> isSharpEdge;
+    isSharpEdge.reserve(uniqueEdges.size());
+    for (size_t e = 0; e < uniqueEdges.size(); ++e) {
+        isSharpEdge[uniqueEdges[e]] = edgeIsSharp[e];
+    }
+
+    // Identify crease vertices and their crease neighbors
+    std::vector<bool> isCreaseVertex(numVertices, false);
+    std::vector<std::vector<uint32_t>> creaseNeighbors(numVertices);
+
+    for (size_t e = 0; e < uniqueEdges.size(); ++e) {
+        if (edgeIsSharp[e]) {
+            const EdgeKey& edge = uniqueEdges[e];
             isCreaseVertex[edge.v0] = true;
             isCreaseVertex[edge.v1] = true;
 
-            // Store crease neighbors
             auto addCreaseNeighbor = [&](uint32_t v, uint32_t n) {
                 auto& neighbors = creaseNeighbors[v];
                 if (std::find(neighbors.begin(), neighbors.end(), n) == neighbors.end()) {
@@ -176,10 +237,11 @@ MeshData Subdivision::loopSubdivide(const MeshData& input, float creaseAngleThre
         }
     }
 
-    // Step 1: Compute new positions for original vertices
-    output.vertices.resize(welded.vertices.size());
+    // ========== PHASE 6: Parallel vertex repositioning ==========
+    output.vertices.resize(numVertices);
 
-    for (size_t i = 0; i < welded.vertices.size(); ++i) {
+    #pragma omp parallel for schedule(static)
+    for (size_t i = 0; i < numVertices; ++i) {
         const auto& neighbors = vertexNeighbors[i];
         size_t n = neighbors.size();
 
@@ -191,11 +253,9 @@ MeshData Subdivision::loopSubdivide(const MeshData& input, float creaseAngleThre
         Vertex& outVert = output.vertices[i];
 
         if (isCreaseVertex[i]) {
-            // Crease/boundary vertex handling
             const auto& cNeighbors = creaseNeighbors[i];
 
             if (cNeighbors.size() == 2) {
-                // Regular crease vertex: 3/4 * v + 1/8 * (c1 + c2)
                 const Vertex& c1 = welded.vertices[cNeighbors[0]];
                 const Vertex& c2 = welded.vertices[cNeighbors[1]];
 
@@ -208,12 +268,9 @@ MeshData Subdivision::loopSubdivide(const MeshData& input, float creaseAngleThre
                 outVert.texCoord = 0.75f * welded.vertices[i].texCoord
                                  + 0.125f * (c1.texCoord + c2.texCoord);
             } else {
-                // Corner vertex (more than 2 crease edges meet here)
-                // Keep original position to preserve sharp corners
                 outVert = welded.vertices[i];
             }
         } else {
-            // Interior vertex - standard Loop subdivision rule
             float beta;
             if (n == 3) {
                 beta = 3.0f / 16.0f;
@@ -221,7 +278,6 @@ MeshData Subdivision::loopSubdivide(const MeshData& input, float creaseAngleThre
                 beta = 3.0f / (8.0f * static_cast<float>(n));
             }
 
-            // New position = (1 - n*beta) * v + beta * sum(neighbors)
             glm::vec3 neighborSum(0.0f);
             glm::vec3 normalSum(0.0f);
             glm::vec2 texSum(0.0f);
@@ -243,30 +299,37 @@ MeshData Subdivision::loopSubdivide(const MeshData& input, float creaseAngleThre
         }
     }
 
-    // Step 2: Create edge vertices with Loop subdivision weights
+    // ========== PHASE 7: Parallel edge vertex creation ==========
+    // Pre-allocate space for edge vertices (one per unique edge)
+    size_t numEdges = uniqueEdges.size();
+    size_t edgeVertexStartIndex = output.vertices.size();
+    output.vertices.resize(edgeVertexStartIndex + numEdges);
+
+    // Create map from edge to its vertex index
     std::unordered_map<EdgeKey, uint32_t, EdgeKeyHash> edgeVertexMap;
+    edgeVertexMap.reserve(numEdges);
+    for (size_t e = 0; e < numEdges; ++e) {
+        edgeVertexMap[uniqueEdges[e]] = static_cast<uint32_t>(edgeVertexStartIndex + e);
+    }
 
-    auto getLoopEdgeVertex = [&](uint32_t v0, uint32_t v1) -> uint32_t {
-        EdgeKey key(v0, v1);
+    // Pre-extract data for parallel-safe access
+    std::vector<std::vector<uint32_t>> edgeOppositesVec(numEdges);
+    for (size_t e = 0; e < numEdges; ++e) {
+        edgeOppositesVec[e] = edgeOpposites.at(uniqueEdges[e]);
+    }
 
-        auto it = edgeVertexMap.find(key);
-        if (it != edgeVertexMap.end()) {
-            return it->second;
-        }
-
-        const Vertex& vert0 = welded.vertices[v0];
-        const Vertex& vert1 = welded.vertices[v1];
+    #pragma omp parallel for schedule(static)
+    for (size_t e = 0; e < numEdges; ++e) {
+        const EdgeKey& edge = uniqueEdges[e];
+        const Vertex& vert0 = welded.vertices[edge.v0];
+        const Vertex& vert1 = welded.vertices[edge.v1];
 
         Vertex newVert;
 
-        // Check if this is a sharp/crease edge
-        auto sharpIt = isSharpEdge.find(key);
-        bool edgeIsSharp = (sharpIt != isSharpEdge.end() && sharpIt->second);
+        bool sharp = edgeIsSharp[e];
+        const auto& opposites = edgeOppositesVec[e];
 
-        const auto& opposites = edgeOpposites[key];
-
-        if (!edgeIsSharp && opposites.size() == 2) {
-            // Interior smooth edge: 3/8 * (v0 + v1) + 1/8 * (opposite0 + opposite1)
+        if (!sharp && opposites.size() == 2) {
             const Vertex& opp0 = welded.vertices[opposites[0]];
             const Vertex& opp1 = welded.vertices[opposites[1]];
 
@@ -279,34 +342,67 @@ MeshData Subdivision::loopSubdivide(const MeshData& input, float creaseAngleThre
             newVert.texCoord = 0.375f * (vert0.texCoord + vert1.texCoord)
                              + 0.125f * (opp0.texCoord + opp1.texCoord);
         } else {
-            // Sharp/crease/boundary edge: simple midpoint to preserve sharpness
             newVert.position = 0.5f * (vert0.position + vert1.position);
             newVert.normal = glm::normalize(0.5f * (vert0.normal + vert1.normal));
             newVert.texCoord = 0.5f * (vert0.texCoord + vert1.texCoord);
         }
 
-        uint32_t newIndex = static_cast<uint32_t>(output.vertices.size());
-        output.vertices.push_back(newVert);
-        edgeVertexMap[key] = newIndex;
+        output.vertices[edgeVertexStartIndex + e] = newVert;
+    }
 
-        return newIndex;
+    // ========== PHASE 8: Parallel triangle generation ==========
+    // Pre-compute edge midpoint indices for each face (for parallel-safe access)
+    struct FaceEdges {
+        uint32_t m01, m12, m20;
     };
+    std::vector<FaceEdges> faceEdgeVertices(numFaces);
 
-    // Step 3: Create new triangles
-    for (size_t i = 0; i < welded.indices.size(); i += 3) {
+    for (size_t f = 0; f < numFaces; ++f) {
+        size_t i = f * 3;
         uint32_t i0 = welded.indices[i];
         uint32_t i1 = welded.indices[i + 1];
         uint32_t i2 = welded.indices[i + 2];
 
-        uint32_t m01 = getLoopEdgeVertex(i0, i1);
-        uint32_t m12 = getLoopEdgeVertex(i1, i2);
-        uint32_t m20 = getLoopEdgeVertex(i2, i0);
+        faceEdgeVertices[f].m01 = edgeVertexMap.at(EdgeKey(i0, i1));
+        faceEdgeVertices[f].m12 = edgeVertexMap.at(EdgeKey(i1, i2));
+        faceEdgeVertices[f].m20 = edgeVertexMap.at(EdgeKey(i2, i0));
+    }
 
-        // 4 new triangles
-        output.indices.push_back(i0);  output.indices.push_back(m01); output.indices.push_back(m20);
-        output.indices.push_back(m01); output.indices.push_back(i1);  output.indices.push_back(m12);
-        output.indices.push_back(m20); output.indices.push_back(m12); output.indices.push_back(i2);
-        output.indices.push_back(m01); output.indices.push_back(m12); output.indices.push_back(m20);
+    // Each original triangle produces 4 new triangles (12 indices)
+    output.indices.resize(numFaces * 12);
+
+    #pragma omp parallel for schedule(static)
+    for (size_t f = 0; f < numFaces; ++f) {
+        size_t i = f * 3;
+        uint32_t i0 = welded.indices[i];
+        uint32_t i1 = welded.indices[i + 1];
+        uint32_t i2 = welded.indices[i + 2];
+
+        uint32_t m01 = faceEdgeVertices[f].m01;
+        uint32_t m12 = faceEdgeVertices[f].m12;
+        uint32_t m20 = faceEdgeVertices[f].m20;
+
+        size_t outIdx = f * 12;
+
+        // Triangle 0: corner 0
+        output.indices[outIdx + 0] = i0;
+        output.indices[outIdx + 1] = m01;
+        output.indices[outIdx + 2] = m20;
+
+        // Triangle 1: corner 1
+        output.indices[outIdx + 3] = m01;
+        output.indices[outIdx + 4] = i1;
+        output.indices[outIdx + 5] = m12;
+
+        // Triangle 2: corner 2
+        output.indices[outIdx + 6] = m20;
+        output.indices[outIdx + 7] = m12;
+        output.indices[outIdx + 8] = i2;
+
+        // Triangle 3: center
+        output.indices[outIdx + 9] = m01;
+        output.indices[outIdx + 10] = m12;
+        output.indices[outIdx + 11] = m20;
     }
 
     output.calculateBounds();

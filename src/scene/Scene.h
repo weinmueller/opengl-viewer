@@ -14,6 +14,9 @@ public:
     void removeObject(SceneObject* object);
     void clear();
 
+    // Call each frame to update all objects (checks for async GPU uploads)
+    void update();
+
     SceneObject* getObject(size_t index) const;
     SceneObject* findObject(const std::string& name) const;
     size_t getObjectCount() const { return m_objects.size(); }

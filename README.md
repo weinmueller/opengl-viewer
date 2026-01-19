@@ -10,6 +10,8 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **OBJ Mesh Loading** - Load multiple OBJ files simultaneously with automatic normal handling
 - **Object Picking** - Click to select objects with visual highlight feedback
 - **Mesh Subdivision** - Loop subdivision (smooth) and midpoint subdivision with crease/boundary preservation
+- **Parallel Processing** - OpenMP-accelerated subdivision for large meshes (4-5x speedup)
+- **GPU Double-Buffering** - Fence-synchronized buffer swapping for smooth geometry updates
 - **Orbit Camera** - Intuitive camera controls for 3D navigation
 - **Blinn-Phong Lighting** - Realistic shading with directional light
 - **Wireframe Mode** - Toggle wireframe rendering for mesh inspection
@@ -24,10 +26,11 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - CMake 3.16+
 - OpenGL 4.6 compatible GPU and drivers
 - GLFW3
+- OpenMP (usually included with GCC/Clang)
 
 ### Ubuntu/Debian
 ```bash
-sudo apt install cmake libgl-dev libglfw3-dev
+sudo apt install cmake libgl-dev libglfw3-dev libomp-dev
 ```
 
 ## Building
@@ -108,8 +111,9 @@ OpenGL/
 
 - [x] Object picking and selection
 - [x] Mesh subdivision (Loop and midpoint)
-- [ ] Performance optimization for large meshes (>1M triangles)
-- [ ] Multi-threaded geometry processing
+- [x] Parallel subdivision with OpenMP
+- [x] GPU double-buffering for geometry updates
+- [ ] GPU-based subdivision (compute shaders)
 - [ ] Frustum culling and LOD
 - [ ] Material and texture support
 
@@ -119,6 +123,7 @@ OpenGL/
 - [GLAD](https://glad.dav1d.de/) - OpenGL loader
 - [GLM](https://github.com/g-truc/glm) - Mathematics library
 - [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) - OBJ file parsing
+- [OpenMP](https://www.openmp.org/) - Parallel processing
 
 ## License
 

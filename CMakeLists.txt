@@ -17,6 +17,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 # Find required packages
 find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
+find_package(OpenMP REQUIRED)
 
 # GLAD (OpenGL loader - glad2 generates gl.c)
 add_library(glad STATIC
@@ -59,6 +60,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glad
     glm
     tinyobjloader
+    OpenMP::OpenMP_CXX
 )
 
 # Copy shaders to build directory

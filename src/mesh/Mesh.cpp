@@ -1,107 +1,213 @@
 #include "Mesh.h"
 
-Mesh::Mesh()
-    : m_vao(0), m_vbo(0), m_ebo(0)
-    , m_vertexCount(0), m_indexCount(0)
-    , m_minBounds(0.0f), m_maxBounds(0.0f)
-{
+Mesh::Mesh() {
+    // Both buffer sets start empty
 }
 
 Mesh::~Mesh() {
-    cleanup();
+    cleanupBufferSet(m_buffers[0]);
+    cleanupBufferSet(m_buffers[1]);
 }
 
 Mesh::Mesh(Mesh&& other) noexcept
-    : m_vao(other.m_vao), m_vbo(other.m_vbo), m_ebo(other.m_ebo)
-    , m_vertexCount(other.m_vertexCount), m_indexCount(other.m_indexCount)
-    , m_minBounds(other.m_minBounds), m_maxBounds(other.m_maxBounds)
+    : m_buffers{std::move(other.m_buffers[0]), std::move(other.m_buffers[1])}
+    , m_writeIndex(other.m_writeIndex)
+    , m_readIndex(other.m_readIndex)
+    , m_vertexCount(other.m_vertexCount)
+    , m_indexCount(other.m_indexCount)
+    , m_minBounds(other.m_minBounds)
+    , m_maxBounds(other.m_maxBounds)
+    , m_pendingMinBounds(other.m_pendingMinBounds)
+    , m_pendingMaxBounds(other.m_pendingMaxBounds)
+    , m_pendingVertexCount(other.m_pendingVertexCount)
+    , m_pendingIndexCount(other.m_pendingIndexCount)
 {
-    other.m_vao = 0;
-    other.m_vbo = 0;
-    other.m_ebo = 0;
+    other.m_buffers[0] = BufferSet{};
+    other.m_buffers[1] = BufferSet{};
+    other.m_writeIndex = 0;
+    other.m_readIndex = 0;
 }
 
 Mesh& Mesh::operator=(Mesh&& other) noexcept {
     if (this != &other) {
-        cleanup();
-        m_vao = other.m_vao;
-        m_vbo = other.m_vbo;
-        m_ebo = other.m_ebo;
+        cleanupBufferSet(m_buffers[0]);
+        cleanupBufferSet(m_buffers[1]);
+
+        m_buffers[0] = other.m_buffers[0];
+        m_buffers[1] = other.m_buffers[1];
+        m_writeIndex = other.m_writeIndex;
+        m_readIndex = other.m_readIndex;
         m_vertexCount = other.m_vertexCount;
         m_indexCount = other.m_indexCount;
         m_minBounds = other.m_minBounds;
         m_maxBounds = other.m_maxBounds;
-        other.m_vao = 0;
-        other.m_vbo = 0;
-        other.m_ebo = 0;
+        m_pendingMinBounds = other.m_pendingMinBounds;
+        m_pendingMaxBounds = other.m_pendingMaxBounds;
+        m_pendingVertexCount = other.m_pendingVertexCount;
+        m_pendingIndexCount = other.m_pendingIndexCount;
+
+        other.m_buffers[0] = BufferSet{};
+        other.m_buffers[1] = BufferSet{};
+        other.m_writeIndex = 0;
+        other.m_readIndex = 0;
     }
     return *this;
 }
 
+void Mesh::cleanupBufferSet(BufferSet& buf) {
+    if (buf.fence) {
+        glDeleteSync(buf.fence);
+        buf.fence = nullptr;
+    }
+    if (buf.vao) {
+        glDeleteVertexArrays(1, &buf.vao);
+        buf.vao = 0;
+    }
+    if (buf.vbo) {
+        glDeleteBuffers(1, &buf.vbo);
+        buf.vbo = 0;
+    }
+    if (buf.ebo) {
+        glDeleteBuffers(1, &buf.ebo);
+        buf.ebo = 0;
+    }
+    buf.indexCount = 0;
+}
+
+void Mesh::setupVertexAttributes(BufferSet& buf) {
+    glVertexArrayVertexBuffer(buf.vao, 0, buf.vbo, 0, sizeof(Vertex));
+    glVertexArrayElementBuffer(buf.vao, buf.ebo);
+
+    // Position attribute
+    glEnableVertexArrayAttrib(buf.vao, 0);
+    glVertexArrayAttribFormat(buf.vao, 0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+    glVertexArrayAttribBinding(buf.vao, 0, 0);
+
+    // Normal attribute
+    glEnableVertexArrayAttrib(buf.vao, 1);
+    glVertexArrayAttribFormat(buf.vao, 1, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
+    glVertexArrayAttribBinding(buf.vao, 1, 0);
+
+    // TexCoord attribute
+    glEnableVertexArrayAttrib(buf.vao, 2);
+    glVertexArrayAttribFormat(buf.vao, 2, 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, texCoord));
+    glVertexArrayAttribBinding(buf.vao, 2, 0);
+}
+
 void Mesh::upload(const MeshData& data) {
-    cleanup();
+    // For synchronous upload, we upload to the read buffer directly
+    cleanupBufferSet(m_buffers[m_readIndex]);
 
     if (data.empty()) return;
 
+    BufferSet& buf = m_buffers[m_readIndex];
+
+    glCreateVertexArrays(1, &buf.vao);
+    glCreateBuffers(1, &buf.vbo);
+    glCreateBuffers(1, &buf.ebo);
+
+    glNamedBufferStorage(buf.vbo, data.vertices.size() * sizeof(Vertex),
+                         data.vertices.data(), 0);
+    glNamedBufferStorage(buf.ebo, data.indices.size() * sizeof(uint32_t),
+                         data.indices.data(), 0);
+
+    setupVertexAttributes(buf);
+
+    buf.indexCount = static_cast<uint32_t>(data.indices.size());
     m_vertexCount = static_cast<uint32_t>(data.vertices.size());
-    m_indexCount = static_cast<uint32_t>(data.indices.size());
+    m_indexCount = buf.indexCount;
     m_minBounds = data.minBounds;
     m_maxBounds = data.maxBounds;
 
-    glCreateVertexArrays(1, &m_vao);
-    glCreateBuffers(1, &m_vbo);
-    glCreateBuffers(1, &m_ebo);
+    // Ensure write index matches read index (no pending upload)
+    m_writeIndex = m_readIndex;
+}
 
-    glNamedBufferStorage(m_vbo, data.vertices.size() * sizeof(Vertex),
+void Mesh::uploadAsync(const MeshData& data) {
+    if (data.empty()) return;
+
+    // Select the write buffer (the one not currently being rendered)
+    int writeIdx = (m_readIndex + 1) % 2;
+    BufferSet& buf = m_buffers[writeIdx];
+
+    // If there's a previous pending upload on this buffer, wait for it
+    if (buf.fence) {
+        glClientWaitSync(buf.fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+        glDeleteSync(buf.fence);
+        buf.fence = nullptr;
+    }
+
+    // Clean up old resources
+    cleanupBufferSet(buf);
+
+    // Create new buffers
+    glCreateVertexArrays(1, &buf.vao);
+    glCreateBuffers(1, &buf.vbo);
+    glCreateBuffers(1, &buf.ebo);
+
+    glNamedBufferStorage(buf.vbo, data.vertices.size() * sizeof(Vertex),
                          data.vertices.data(), 0);
-    glNamedBufferStorage(m_ebo, data.indices.size() * sizeof(uint32_t),
+    glNamedBufferStorage(buf.ebo, data.indices.size() * sizeof(uint32_t),
                          data.indices.data(), 0);
 
-    glVertexArrayVertexBuffer(m_vao, 0, m_vbo, 0, sizeof(Vertex));
-    glVertexArrayElementBuffer(m_vao, m_ebo);
+    setupVertexAttributes(buf);
 
-    // Position attribute
-    glEnableVertexArrayAttrib(m_vao, 0);
-    glVertexArrayAttribFormat(m_vao, 0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
-    glVertexArrayAttribBinding(m_vao, 0, 0);
+    buf.indexCount = static_cast<uint32_t>(data.indices.size());
 
-    // Normal attribute
-    glEnableVertexArrayAttrib(m_vao, 1);
-    glVertexArrayAttribFormat(m_vao, 1, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
-    glVertexArrayAttribBinding(m_vao, 1, 0);
+    // Insert fence to track GPU completion
+    buf.fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
-    // TexCoord attribute
-    glEnableVertexArrayAttrib(m_vao, 2);
-    glVertexArrayAttribFormat(m_vao, 2, 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, texCoord));
-    glVertexArrayAttribBinding(m_vao, 2, 0);
+    // Store pending state
+    m_pendingMinBounds = data.minBounds;
+    m_pendingMaxBounds = data.maxBounds;
+    m_pendingVertexCount = static_cast<uint32_t>(data.vertices.size());
+    m_pendingIndexCount = buf.indexCount;
+
+    // Mark write buffer as pending
+    m_writeIndex = writeIdx;
+}
+
+bool Mesh::swapBuffers() {
+    if (m_writeIndex == m_readIndex) {
+        // No pending upload
+        return false;
+    }
+
+    BufferSet& buf = m_buffers[m_writeIndex];
+
+    // Check if GPU finished uploading
+    if (buf.fence) {
+        GLenum result = glClientWaitSync(buf.fence, 0, 0);
+        if (result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED) {
+            glDeleteSync(buf.fence);
+            buf.fence = nullptr;
+
+            // Swap: make write buffer the new read buffer
+            m_readIndex = m_writeIndex;
+            m_minBounds = m_pendingMinBounds;
+            m_maxBounds = m_pendingMaxBounds;
+            m_vertexCount = m_pendingVertexCount;
+            m_indexCount = m_pendingIndexCount;
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void Mesh::draw() const {
-    if (!isValid()) return;
+    const BufferSet& buf = m_buffers[m_readIndex];
+    if (!buf.vao) return;
 
-    glBindVertexArray(m_vao);
-    glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(buf.vao);
+    glDrawElements(GL_TRIANGLES, buf.indexCount, GL_UNSIGNED_INT, nullptr);
 }
 
 void Mesh::drawWireframe() const {
-    if (!isValid()) return;
+    if (!m_buffers[m_readIndex].vao) return;
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     draw();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-}
-
-void Mesh::cleanup() {
-    if (m_vao) {
-        glDeleteVertexArrays(1, &m_vao);
-        m_vao = 0;
-    }
-    if (m_vbo) {
-        glDeleteBuffers(1, &m_vbo);
-        m_vbo = 0;
-    }
-    if (m_ebo) {
-        glDeleteBuffers(1, &m_ebo);
-        m_ebo = 0;
-    }
 }

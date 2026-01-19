@@ -2,6 +2,8 @@
 
 #include "mesh/MeshData.h"
 #include <unordered_map>
+#include <vector>
+#include <tuple>
 
 class Subdivision {
 public:
@@ -38,6 +40,25 @@ private:
             return std::hash<uint64_t>()(
                 (static_cast<uint64_t>(k.v0) << 32) | k.v1
             );
+        }
+    };
+
+    // Thread-local storage for parallel adjacency building
+    struct ThreadLocalAdjacency {
+        std::vector<std::pair<uint32_t, uint32_t>> neighborPairs;
+        std::vector<std::tuple<EdgeKey, uint32_t>> edgeOppositePairs;
+        std::vector<std::pair<EdgeKey, size_t>> edgeFacePairs;
+
+        void reserve(size_t numFaces) {
+            neighborPairs.reserve(numFaces * 6);
+            edgeOppositePairs.reserve(numFaces * 3);
+            edgeFacePairs.reserve(numFaces * 3);
+        }
+
+        void clear() {
+            neighborPairs.clear();
+            edgeOppositePairs.clear();
+            edgeFacePairs.clear();
         }
     };
 

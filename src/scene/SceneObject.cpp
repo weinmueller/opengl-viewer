@@ -92,6 +92,14 @@ void SceneObject::updateWorldBounds() {
     }
 }
 
+void SceneObject::update() {
+    if (m_mesh && m_mesh->swapBuffers()) {
+        // Buffer swap occurred, update bounds
+        m_localBounds = BoundingBox(m_mesh->getMinBounds(), m_mesh->getMaxBounds());
+        updateWorldBounds();
+    }
+}
+
 void SceneObject::draw() const {
     if (m_visible && m_mesh) {
         m_mesh->draw();

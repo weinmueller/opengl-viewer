@@ -68,6 +68,9 @@ void Application::processInput() {
 
 void Application::update(float deltaTime) {
     (void)deltaTime;
+
+    // Update scene objects (checks for completed async GPU uploads)
+    m_scene.update();
 }
 
 void Application::render() {
