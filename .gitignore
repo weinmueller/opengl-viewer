@@ -12,7 +12,7 @@ out/
 
 # Compiled files
 *.o
-*.obj
+# *.obj
 *.a
 *.lib
 *.so

@@ -37,6 +37,9 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 ```bash
 cd build && cmake .. && make
 ./MeshViewer assets/meshes/cube.obj
+
+# With custom crease angle threshold
+./MeshViewer --angle 45 assets/meshes/cube.obj
 ```
 
 ## Current Features
@@ -44,7 +47,9 @@ cd build && cmake .. && make
 - Object picking with right-click selection
 - Selection highlighting (orange tint)
 - Mesh subdivision (S = Loop smooth, D = midpoint)
-- Boundary-preserving subdivision (corners and edges kept)
+- Crease-preserving subdivision (sharp edges detected via dihedral angle threshold)
+- Configurable crease angle via `--angle` command line option (default: 30 degrees)
+- Automatic vertex welding for meshes with split vertices (per-face normals)
 - Mesh statistics printed to terminal
 - Orbit camera (left mouse), pan (middle mouse), zoom (scroll)
 - Blinn-Phong lighting with directional light

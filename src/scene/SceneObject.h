@@ -20,7 +20,7 @@ public:
     void setColor(const glm::vec3& color) { m_color = color; }
 
     // Subdivision
-    void subdivide(bool smooth = true);
+    void subdivide(bool smooth = true, float creaseAngle = 30.0f);
     bool canSubdivide() const { return !m_meshData.empty(); }
 
     const std::string& getName() const { return m_name; }

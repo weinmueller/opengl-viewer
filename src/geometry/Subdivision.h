@@ -7,10 +7,16 @@ class Subdivision {
 public:
     // Loop subdivision - smooths and subdivides triangle mesh
     // Each triangle becomes 4 triangles
-    static MeshData loopSubdivide(const MeshData& input);
+    // creaseAngleThreshold: edges with dihedral angle > threshold (in degrees) are kept sharp
+    // Default 30 degrees preserves sharp features like cube edges
+    static MeshData loopSubdivide(const MeshData& input, float creaseAngleThreshold = 30.0f);
 
     // Simple midpoint subdivision - splits without smoothing
     static MeshData midpointSubdivide(const MeshData& input);
+
+    // Weld vertices that share the same position (within epsilon)
+    // This is needed before subdivision when meshes have split vertices for per-face normals
+    static MeshData weldVertices(const MeshData& input, float epsilon = 1e-6f);
 
 private:
     // Edge key for hash map (ordered pair of vertex indices)

@@ -33,14 +33,14 @@ void SceneObject::setMeshData(const MeshData& data) {
               << ", Triangles: " << numTriangles << std::endl;
 }
 
-void SceneObject::subdivide(bool smooth) {
+void SceneObject::subdivide(bool smooth, float creaseAngle) {
     if (m_meshData.empty()) {
         return;
     }
 
     // Apply subdivision
     if (smooth) {
-        m_meshData = Subdivision::loopSubdivide(m_meshData);
+        m_meshData = Subdivision::loopSubdivide(m_meshData, creaseAngle);
     } else {
         m_meshData = Subdivision::midpointSubdivide(m_meshData);
     }

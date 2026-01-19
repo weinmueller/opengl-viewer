@@ -9,7 +9,7 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **Modern OpenGL 4.6** - Uses Direct State Access (DSA) for efficient GPU resource management
 - **OBJ Mesh Loading** - Load multiple OBJ files simultaneously with automatic normal handling
 - **Object Picking** - Click to select objects with visual highlight feedback
-- **Mesh Subdivision** - Loop subdivision (smooth) and midpoint subdivision with boundary preservation
+- **Mesh Subdivision** - Loop subdivision (smooth) and midpoint subdivision with crease/boundary preservation
 - **Orbit Camera** - Intuitive camera controls for 3D navigation
 - **Blinn-Phong Lighting** - Realistic shading with directional light
 - **Wireframe Mode** - Toggle wireframe rendering for mesh inspection
@@ -51,7 +51,20 @@ make
 
 # Run with included samples
 ./MeshViewer ../assets/meshes/sphere.obj ../assets/meshes/torus.obj
+
+# Set crease angle threshold for subdivision (default: 30 degrees)
+./MeshViewer --angle 45 mesh.obj
+
+# Show help
+./MeshViewer --help
 ```
+
+### Command Line Options
+
+| Option | Description |
+|--------|-------------|
+| `--angle <degrees>` | Crease angle threshold for subdivision (default: 30). Edges with dihedral angle greater than this are kept sharp. |
+| `--help` | Show help message |
 
 ### Controls
 

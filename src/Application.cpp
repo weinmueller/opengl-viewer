@@ -4,8 +4,9 @@
 #include <iostream>
 #include <GLFW/glfw3.h>
 
-Application::Application(int width, int height, const std::string& title)
+Application::Application(int width, int height, const std::string& title, float creaseAngle)
     : m_camera(5.0f)
+    , m_creaseAngle(creaseAngle)
 {
     m_window = std::make_unique<Window>(width, height, title);
     m_renderer = std::make_unique<Renderer>();
@@ -213,7 +214,7 @@ void Application::subdivideSelected(bool smooth) {
     // Subdivide selected objects, or all if none selected
     for (const auto& obj : m_scene.getObjects()) {
         if (obj->isSelected() && obj->canSubdivide()) {
-            obj->subdivide(smooth);
+            obj->subdivide(smooth, m_creaseAngle);
             anySubdivided = true;
         }
     }
@@ -222,7 +223,7 @@ void Application::subdivideSelected(bool smooth) {
     if (!anySubdivided) {
         for (const auto& obj : m_scene.getObjects()) {
             if (obj->canSubdivide()) {
-                obj->subdivide(smooth);
+                obj->subdivide(smooth, m_creaseAngle);
             }
         }
     }

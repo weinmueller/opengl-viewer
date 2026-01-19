@@ -12,7 +12,7 @@
 
 class Application {
 public:
-    Application(int width, int height, const std::string& title);
+    Application(int width, int height, const std::string& title, float creaseAngle = 30.0f);
     ~Application() = default;
 
     int run(const std::vector<std::string>& meshPaths = {});
@@ -44,4 +44,6 @@ private:
     bool m_rightMouseDown{false};
     double m_lastMouseX{0.0};
     double m_lastMouseY{0.0};
+
+    float m_creaseAngle{30.0f};
 };
