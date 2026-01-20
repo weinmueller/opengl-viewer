@@ -11,6 +11,7 @@ void Renderer::init(int width, int height) {
     m_meshShader = std::make_unique<Shader>("shaders/mesh.vert", "shaders/mesh.frag");
     m_pickingShader = std::make_unique<Shader>("shaders/picking.vert", "shaders/picking.frag");
     initPickingFBO(width, height);
+    m_helpOverlay.init();
 }
 
 void Renderer::initPickingFBO(int width, int height) {
@@ -115,6 +116,9 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
         }
         ++index;
     }
+
+    // Render help overlay on top
+    m_helpOverlay.render(m_pickingWidth, m_pickingHeight);
 }
 
 int Renderer::pick(const Scene& scene, const Camera& camera, float aspectRatio, int mouseX, int mouseY) {

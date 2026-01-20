@@ -98,6 +98,9 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
             case GLFW_KEY_C:
                 m_renderer->toggleBackfaceCulling();
                 break;
+            case GLFW_KEY_H:
+                m_renderer->toggleHelpOverlay();
+                break;
         }
     }
 }

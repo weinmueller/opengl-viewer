@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "core/Shader.h"
 #include "scene/Scene.h"
+#include "ui/HelpOverlay.h"
 #include <glm/glm.hpp>
 #include <glad/gl.h>
 #include <memory>
@@ -37,6 +38,9 @@ public:
     bool isBackfaceCulling() const { return m_backfaceCulling; }
     void toggleBackfaceCulling() { m_backfaceCulling = !m_backfaceCulling; }
 
+    void toggleHelpOverlay() { m_helpOverlay.toggle(); }
+    bool isHelpVisible() const { return m_helpOverlay.isVisible(); }
+
     Light& getLight() { return m_light; }
     const Light& getLight() const { return m_light; }
 
@@ -58,4 +62,6 @@ private:
     Light m_light;
     bool m_wireframe{false};
     bool m_backfaceCulling{true};
+
+    HelpOverlay m_helpOverlay;
 };

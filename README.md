@@ -16,6 +16,7 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **Orbit Camera** - Intuitive camera controls for 3D navigation
 - **Blinn-Phong Lighting** - Realistic shading with directional light
 - **Wireframe Mode** - Toggle wireframe rendering for mesh inspection
+- **Help Overlay** - In-window keyboard shortcut reference (H key)
 
 ## Screenshots
 
@@ -83,6 +84,7 @@ make
 | W | Toggle wireframe |
 | C | Toggle back-face culling |
 | F | Focus on scene |
+| H | Show help overlay (keyboard shortcuts) |
 | ESC | Exit |
 
 Mesh statistics (vertices, triangles) are printed to the terminal after loading and subdivision.
@@ -99,11 +101,14 @@ OpenGL/
 │   ├── scene/                # Scene graph, Objects
 │   ├── mesh/                 # Mesh loading and GPU resources
 │   └── geometry/             # Subdivision algorithms
+│   └── ui/                   # User interface (HelpOverlay)
 ├── shaders/
 │   ├── mesh.vert             # Main vertex shader
 │   ├── mesh.frag             # Main fragment shader (Blinn-Phong)
 │   ├── picking.vert          # Object picking vertex shader
-│   └── picking.frag          # Object picking fragment shader
+│   ├── picking.frag          # Object picking fragment shader
+│   ├── text.vert             # Text rendering vertex shader
+│   └── text.frag             # Text rendering fragment shader
 ├── assets/
 │   └── meshes/               # Sample mesh files
 └── external/                 # Third-party libraries
@@ -117,6 +122,8 @@ OpenGL/
 - [x] GPU double-buffering for geometry updates
 - [x] Back-face culling with toggle
 - [x] Cached normal matrix optimization
+- [x] In-window help overlay (H key)
+- [ ] Better mesh visualization (improved lighting/shading)
 - [ ] Object-level frustum culling
 - [ ] GPU-based subdivision (compute shaders)
 - [ ] LOD (Level of Detail) system

@@ -25,6 +25,9 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - **MeshLoader** (`src/mesh/MeshLoader.h`) - Abstract loader interface
 - **ObjLoader** (`src/mesh/ObjLoader.h`) - OBJ file support via tinyobjloader
 
+### User Interface
+- **HelpOverlay** (`src/ui/HelpOverlay.h`) - In-window help with bitmap font text rendering
+
 ## Technology Stack
 - C++17
 - OpenGL 4.6 Core Profile (DSA - Direct State Access)
@@ -59,6 +62,7 @@ cd build && cmake .. && make
 - Wireframe toggle (W key)
 - Back-face culling toggle (C key) for performance vs. mesh compatibility
 - Focus on scene (F key)
+- In-window help overlay (H key) showing all keyboard shortcuts
 
 ## Future Improvements
 
@@ -74,6 +78,10 @@ cd build && cmake .. && make
 - [ ] Add occlusion culling for complex scenes
 - [ ] Persistent mapped buffers for streaming updates
 - [ ] Background tessellation thread with progress indicators
+
+### User Interface
+- [ ] Improved mesh visibility (better lighting/shading)
+- [x] In-window help overlay (H key to show controls)
 
 ### Additional Features
 - [ ] Material support (MTL files)
