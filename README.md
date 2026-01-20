@@ -11,14 +11,16 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **Object Picking** - Click to select objects with visual highlight feedback
 - **Mesh Subdivision** - Loop subdivision (smooth) and midpoint subdivision with crease/boundary preservation. Only subdivides visible objects when none selected.
 - **Parallel Processing** - OpenMP-accelerated subdivision for large meshes (4-5x speedup)
+- **Background Tessellation** - Non-blocking subdivision with real-time progress indicators. UI stays responsive during computation.
 - **GPU Double-Buffering** - Fence-synchronized buffer swapping for smooth geometry updates
 - **Back-face Culling** - Toggleable culling for ~50% faster rendering on closed meshes
-- **Orbit Camera** - Intuitive camera controls for 3D navigation
+- **Orbit Camera** - Intuitive camera controls with mouse and arrow keys
 - **Blinn-Phong Lighting** - Realistic shading with directional light
 - **Rim Lighting** - Fresnel-based edge highlighting for better shape visibility
 - **Gradient Background** - Professional dark blue gradient backdrop
 - **Wireframe Mode** - Toggle wireframe rendering for mesh inspection
 - **Help Overlay** - In-window keyboard shortcut reference with toggle indicators (H key)
+- **Progress Overlay** - Shows subdivision progress with phase name, percentage, and queued task count
 - **Frustum Culling** - Skip rendering objects outside camera view (G key)
 
 ## Screenshots
@@ -82,6 +84,7 @@ make
 | Middle Mouse Drag | Pan camera |
 | Right Click | Select object (click background to deselect) |
 | Scroll Wheel | Zoom in/out |
+| Arrow Keys | Orbit camera |
 | S | Subdivide mesh (Loop - smooth) |
 | D | Subdivide mesh (midpoint - keeps shape) |
 | W | Toggle wireframe |
@@ -89,7 +92,7 @@ make
 | G | Toggle frustum culling |
 | F | Focus on scene |
 | H | Show help overlay (keyboard shortcuts) |
-| ESC | Exit |
+| ESC | Cancel active subdivision / Exit |
 
 Mesh statistics (vertices, triangles) are printed to the terminal after loading and subdivision.
 
@@ -104,8 +107,8 @@ OpenGL/
 │   ├── renderer/             # Camera, Renderer
 │   ├── scene/                # Scene graph, Objects
 │   ├── mesh/                 # Mesh loading and GPU resources
-│   └── geometry/             # Subdivision algorithms
-│   └── ui/                   # User interface (HelpOverlay)
+│   ├── geometry/             # Subdivision algorithms and background threading
+│   └── ui/                   # User interface (HelpOverlay, ProgressOverlay)
 ├── shaders/
 │   ├── mesh.vert             # Main vertex shader
 │   ├── mesh.frag             # Main fragment shader (Blinn-Phong)
@@ -132,6 +135,7 @@ OpenGL/
 - [x] Rim lighting for better mesh visibility
 - [x] Gradient background
 - [x] Object-level frustum culling (G key)
+- [x] Background tessellation with progress indicators
 - [ ] GPU-based subdivision (compute shaders)
 - [ ] LOD (Level of Detail) system
 - [ ] Material and texture support

@@ -6,9 +6,12 @@
 #include "scene/Frustum.h"
 #include "scene/BoundingBox.h"
 #include "ui/HelpOverlay.h"
+#include "ui/ProgressOverlay.h"
 #include <glm/glm.hpp>
 #include <glad/gl.h>
 #include <memory>
+
+class SubdivisionManager;
 
 struct Light {
     glm::vec3 direction{-0.5f, -1.0f, -0.3f};
@@ -52,6 +55,8 @@ public:
 
     void toggleHelpOverlay() { m_helpOverlay.toggle(); }
     bool isHelpVisible() const { return m_helpOverlay.isVisible(); }
+
+    void setSubdivisionManager(SubdivisionManager* manager) { m_subdivisionManager = manager; }
 
     Light& getLight() { return m_light; }
     const Light& getLight() const { return m_light; }
@@ -106,4 +111,6 @@ private:
     int m_culledObjects{0};
 
     HelpOverlay m_helpOverlay;
+    ProgressOverlay m_progressOverlay;
+    SubdivisionManager* m_subdivisionManager{nullptr};
 };

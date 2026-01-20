@@ -23,6 +23,12 @@ public:
     void subdivide(bool smooth = true, float creaseAngle = 30.0f);
     bool canSubdivide() const { return !m_meshData.empty(); }
 
+    // Apply pre-computed subdivision result (for background threading)
+    void applySubdividedMesh(MeshData&& data);
+
+    // Get current mesh data (for background subdivision)
+    const MeshData& getMeshData() const { return m_meshData; }
+
     const std::string& getName() const { return m_name; }
     const glm::vec3& getPosition() const { return m_position; }
     const glm::vec3& getRotation() const { return m_rotation; }

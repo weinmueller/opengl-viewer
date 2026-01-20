@@ -25,8 +25,14 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - **MeshLoader** (`src/mesh/MeshLoader.h`) - Abstract loader interface
 - **ObjLoader** (`src/mesh/ObjLoader.h`) - OBJ file support via tinyobjloader
 
+### Geometry Processing
+- **Subdivision** (`src/geometry/Subdivision.h`) - Loop and midpoint subdivision algorithms
+- **SubdivisionManager** (`src/geometry/SubdivisionManager.h`) - Background thread management for subdivision
+- **SubdivisionTask** (`src/geometry/SubdivisionTask.h`) - Task and progress tracking structures
+
 ### User Interface
 - **HelpOverlay** (`src/ui/HelpOverlay.h`) - In-window help with bitmap font text rendering
+- **ProgressOverlay** (`src/ui/ProgressOverlay.h`) - Subdivision progress bar display
 
 ## Technology Stack
 - C++17
@@ -53,11 +59,12 @@ cd build && cmake .. && make
 - Mesh subdivision (S = Loop smooth, D = midpoint) - only visible objects when none selected
 - Crease-preserving subdivision (sharp edges detected via dihedral angle threshold)
 - **Parallel Loop subdivision** using OpenMP (4-5x speedup on multi-core CPUs)
+- **Background tessellation** with progress indicators (non-blocking UI during subdivision)
 - **GPU double-buffering** with fence synchronization for smooth geometry updates
 - Configurable crease angle via `--angle` command line option (default: 30 degrees)
 - Automatic vertex welding for meshes with split vertices (per-face normals)
 - Mesh statistics printed to terminal
-- Orbit camera (left mouse), pan (middle mouse), zoom (scroll)
+- Orbit camera (left mouse or arrow keys), pan (middle mouse), zoom (scroll)
 - Blinn-Phong lighting with directional light
 - Rim/Fresnel lighting for better edge visibility
 - Gradient background (dark blue vertical gradient)
@@ -66,6 +73,7 @@ cd build && cmake .. && make
 - Focus on scene (F key)
 - In-window help overlay (H key) with toggle state indicators
 - Frustum culling toggle (G key)
+- ESC cancels active subdivision (or exits if idle)
 
 ## Future Improvements
 
@@ -75,12 +83,12 @@ cd build && cmake .. && make
 - [x] Back-face culling (toggle with C key)
 - [x] Cached normal matrix (avoids per-frame inverse computation)
 - [x] Object-level frustum culling (G key to toggle)
+- [x] Background tessellation thread with progress indicators
 - [ ] GPU-based subdivision (compute shaders)
 - [ ] Add `glMultiDrawElementsIndirect` for batched rendering
 - [ ] Implement LOD (Level of Detail) system
 - [ ] Add occlusion culling for complex scenes
 - [ ] Persistent mapped buffers for streaming updates
-- [ ] Background tessellation thread with progress indicators
 
 ### User Interface
 - [x] Improved mesh visibility (rim lighting)

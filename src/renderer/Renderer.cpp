@@ -42,6 +42,7 @@ void Renderer::init(int width, int height) {
 
     initPickingFBO(width, height);
     m_helpOverlay.init();
+    m_progressOverlay.init();
 }
 
 void Renderer::initPickingFBO(int width, int height) {
@@ -174,6 +175,9 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     toggles.backfaceCulling = m_backfaceCulling;
     toggles.frustumCulling = m_frustumCulling;
     m_helpOverlay.render(m_pickingWidth, m_pickingHeight, toggles);
+
+    // Render progress overlay if subdivision is active
+    m_progressOverlay.render(m_pickingWidth, m_pickingHeight, m_subdivisionManager);
 }
 
 int Renderer::pick(const Scene& scene, const Camera& camera, float aspectRatio, int mouseX, int mouseY) {

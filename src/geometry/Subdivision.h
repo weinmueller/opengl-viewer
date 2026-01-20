@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mesh/MeshData.h"
+#include "SubdivisionTask.h"
 #include <unordered_map>
 #include <vector>
 #include <tuple>
@@ -15,6 +16,12 @@ public:
 
     // Simple midpoint subdivision - splits without smoothing
     static MeshData midpointSubdivide(const MeshData& input);
+
+    // Progress-aware versions for background threading
+    static MeshData loopSubdivideWithProgress(const MeshData& input, float creaseAngleThreshold,
+                                              SubdivisionProgress& progress);
+    static MeshData midpointSubdivideWithProgress(const MeshData& input,
+                                                   SubdivisionProgress& progress);
 
     // Weld vertices that share the same position (within epsilon)
     // This is needed before subdivision when meshes have split vertices for per-face normals

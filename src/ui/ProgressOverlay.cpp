@@ -1,9 +1,10 @@
-#include "HelpOverlay.h"
+#include "ProgressOverlay.h"
 #include <glm/glm.hpp>
 #include <cstring>
+#include <sstream>
+#include <iomanip>
 
-// Simple 8x8 bitmap font data (printable ASCII 32-126)
-// Each character is 8 bytes, one per row, bits are pixels left-to-right
+// Same 8x8 bitmap font data as HelpOverlay
 static const unsigned char FONT_DATA[] = {
     // Space (32)
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -197,44 +198,39 @@ static const unsigned char FONT_DATA[] = {
     0x76, 0xDC, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-HelpOverlay::HelpOverlay() = default;
+ProgressOverlay::ProgressOverlay() = default;
 
-HelpOverlay::~HelpOverlay() {
+ProgressOverlay::~ProgressOverlay() {
     if (m_fontTexture) glDeleteTextures(1, &m_fontTexture);
     if (m_vao) glDeleteVertexArrays(1, &m_vao);
     if (m_vbo) glDeleteBuffers(1, &m_vbo);
 }
 
-void HelpOverlay::init() {
+void ProgressOverlay::init() {
     m_textShader = std::make_unique<Shader>("shaders/text.vert", "shaders/text.frag");
     createFontTexture();
 
-    // Create VAO/VBO for dynamic quad rendering
     glCreateVertexArrays(1, &m_vao);
     glCreateBuffers(1, &m_vbo);
 
-    // Allocate buffer for a single quad (6 vertices * 4 floats)
     glNamedBufferStorage(m_vbo, 6 * 4 * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
-    // Position attribute (location 0)
     glVertexArrayVertexBuffer(m_vao, 0, m_vbo, 0, 4 * sizeof(float));
     glEnableVertexArrayAttrib(m_vao, 0);
     glVertexArrayAttribFormat(m_vao, 0, 2, GL_FLOAT, GL_FALSE, 0);
     glVertexArrayAttribBinding(m_vao, 0, 0);
 
-    // TexCoord attribute (location 1)
     glEnableVertexArrayAttrib(m_vao, 1);
     glVertexArrayAttribFormat(m_vao, 1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float));
     glVertexArrayAttribBinding(m_vao, 1, 0);
 }
 
-void HelpOverlay::createFontTexture() {
+void ProgressOverlay::createFontTexture() {
     const int texWidth = FONT_COLS * FONT_CHAR_WIDTH;
     const int texHeight = FONT_ROWS * FONT_CHAR_HEIGHT;
 
     std::vector<unsigned char> texData(texWidth * texHeight, 0);
 
-    // Fill texture with font data
     for (int charIdx = 0; charIdx < FONT_CHAR_COUNT; ++charIdx) {
         int col = charIdx % FONT_COLS;
         int row = charIdx / FONT_COLS;
@@ -259,7 +255,7 @@ void HelpOverlay::createFontTexture() {
     glTextureParameteri(m_fontTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
-void HelpOverlay::renderText(const std::string& text, float x, float y, float scale) {
+void ProgressOverlay::renderText(const std::string& text, float x, float y, float scale) {
     const float texWidth = static_cast<float>(FONT_COLS * FONT_CHAR_WIDTH);
     const float texHeight = static_cast<float>(FONT_ROWS * FONT_CHAR_HEIGHT);
     const float charW = FONT_CHAR_WIDTH * scale;
@@ -284,7 +280,6 @@ void HelpOverlay::renderText(const std::string& text, float x, float y, float sc
         float ypos = y;
 
         float vertices[] = {
-            // Position          // TexCoord
             xpos,          ypos,          u0, v0,
             xpos + charW,  ypos,          u1, v0,
             xpos,          ypos + charH,  u0, v1,
@@ -299,8 +294,7 @@ void HelpOverlay::renderText(const std::string& text, float x, float y, float sc
     }
 }
 
-void HelpOverlay::renderQuad(float x, float y, float width, float height) {
-    // Render a solid background quad (using space character texture, effectively solid)
+void ProgressOverlay::renderQuad(float x, float y, float width, float height) {
     float vertices[] = {
         x,         y,          0.0f, 0.0f,
         x + width, y,          0.0f, 0.0f,
@@ -315,56 +309,60 @@ void HelpOverlay::renderQuad(float x, float y, float width, float height) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& toggles) {
-    if (!m_visible) return;
+void ProgressOverlay::renderProgressBar(float x, float y, float width, float height, float progress) {
+    // Background (dark)
+    m_textShader->setVec4("textColor", glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+    m_textShader->setVec4("bgColor", glm::vec4(0.2f, 0.2f, 0.25f, 1.0f));
+    renderQuad(x, y, width, height);
+
+    // Progress fill (blue gradient)
+    float fillWidth = width * progress;
+    if (fillWidth > 0.0f) {
+        m_textShader->setVec4("bgColor", glm::vec4(0.3f, 0.5f, 0.9f, 1.0f));
+        renderQuad(x, y, fillWidth, height);
+    }
+
+    // Border
+    m_textShader->setVec4("bgColor", glm::vec4(0.4f, 0.6f, 0.9f, 1.0f));
+    float borderWidth = 1.0f;
+    renderQuad(x, y, width, borderWidth);
+    renderQuad(x, y + height - borderWidth, width, borderWidth);
+    renderQuad(x, y, borderWidth, height);
+    renderQuad(x + width - borderWidth, y, borderWidth, height);
+}
+
+void ProgressOverlay::render(int screenWidth, int screenHeight, const SubdivisionManager* manager) {
+    if (!manager || !manager->isBusy()) {
+        return;
+    }
 
     m_screenWidth = screenWidth;
     m_screenHeight = screenHeight;
 
-    // Help content with toggle indicators
-    struct HelpLine {
-        std::string text;
-        int toggleType;  // 0=none, 1=wireframe, 2=backface, 3=frustum
-    };
+    const SubdivisionProgress* progress = manager->getActiveProgress();
+    if (!progress) {
+        return;
+    }
 
-    const std::vector<HelpLine> helpLines = {
-        {"=== KEYBOARD ===", 0},
-        {"H      Help toggle", 0},
-        {"W      Wireframe", 1},
-        {"C      Back-face culling", 2},
-        {"G      Frustum culling", 3},
-        {"F      Focus", 0},
-        {"S      Subdivide (smooth)", 0},
-        {"D      Subdivide (midpoint)", 0},
-        {"Arrows Orbit camera", 0},
-        {"ESC    Cancel/Exit", 0},
-        {"", 0},
-        {"=== MOUSE ===", 0},
-        {"Left   Orbit", 0},
-        {"Middle Pan", 0},
-        {"Right  Select", 0},
-        {"Scroll Zoom", 0},
-    };
+    std::string objectName = manager->getActiveObjectName();
+    float totalProgress = progress->totalProgress.load(std::memory_order_relaxed);
+    const char* phaseName = progress->getPhaseName();
+    size_t queuedCount = manager->getQueuedTaskCount();
 
+    // Overlay dimensions
     const float scale = 1.5f;
     const float charW = FONT_CHAR_WIDTH * scale;
     const float charH = FONT_CHAR_HEIGHT * scale;
-    const float lineHeight = charH + 2.0f;
     const float padding = 10.0f;
+    const float progressBarHeight = 16.0f;
+    const float overlayWidth = 300.0f;
+    const float overlayHeight = charH * 3 + progressBarHeight + padding * 4;
 
-    // Calculate overlay dimensions
-    size_t maxLen = 0;
-    for (const auto& line : helpLines) {
-        maxLen = std::max(maxLen, line.text.length());
-    }
-    float overlayWidth = maxLen * charW + padding * 2;
-    float overlayHeight = helpLines.size() * lineHeight + padding * 2;
+    // Position at bottom center
+    float overlayX = (screenWidth - overlayWidth) / 2.0f;
+    float overlayY = screenHeight - overlayHeight - 20.0f;
 
-    // Position at top-left corner with margin
-    float overlayX = 10.0f;
-    float overlayY = 10.0f;
-
-    // Setup rendering state for 2D overlay
+    // Setup rendering state
     glViewport(0, 0, screenWidth, screenHeight);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -379,44 +377,51 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
 
     // Draw background
     m_textShader->setVec4("textColor", glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
-    m_textShader->setVec4("bgColor", glm::vec4(0.1f, 0.1f, 0.15f, 0.92f));
+    m_textShader->setVec4("bgColor", glm::vec4(0.1f, 0.1f, 0.15f, 0.95f));
     renderQuad(overlayX, overlayY, overlayWidth, overlayHeight);
 
     // Draw border
     m_textShader->setVec4("bgColor", glm::vec4(0.4f, 0.6f, 0.9f, 1.0f));
     float borderWidth = 2.0f;
-    renderQuad(overlayX, overlayY, overlayWidth, borderWidth);  // Top
-    renderQuad(overlayX, overlayY + overlayHeight - borderWidth, overlayWidth, borderWidth);  // Bottom
-    renderQuad(overlayX, overlayY, borderWidth, overlayHeight);  // Left
-    renderQuad(overlayX + overlayWidth - borderWidth, overlayY, borderWidth, overlayHeight);  // Right
+    renderQuad(overlayX, overlayY, overlayWidth, borderWidth);
+    renderQuad(overlayX, overlayY + overlayHeight - borderWidth, overlayWidth, borderWidth);
+    renderQuad(overlayX, overlayY, borderWidth, overlayHeight);
+    renderQuad(overlayX + overlayWidth - borderWidth, overlayY, borderWidth, overlayHeight);
 
-    // Colors
-    const glm::vec4 headerColor(0.5f, 0.8f, 1.0f, 1.0f);    // Blue for headers
-    const glm::vec4 normalColor(0.7f, 0.7f, 0.75f, 1.0f);   // Gray for normal text
-    const glm::vec4 activeColor(0.4f, 1.0f, 0.5f, 1.0f);    // Bright green for ON
-
+    // Draw object name
     m_textShader->setVec4("bgColor", glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+    m_textShader->setVec4("textColor", glm::vec4(0.5f, 0.8f, 1.0f, 1.0f));
+    std::string title = "Subdividing: " + objectName;
+    if (title.length() * charW > overlayWidth - 2 * padding) {
+        title = title.substr(0, static_cast<size_t>((overlayWidth - 2 * padding) / charW) - 3) + "...";
+    }
+    renderText(title, overlayX + padding, overlayY + padding, scale);
 
-    float textY = overlayY + padding;
-    for (const auto& line : helpLines) {
-        if (!line.text.empty()) {
-            // Determine if this toggle is active
-            bool isActive = false;
-            if (line.toggleType == 1) isActive = toggles.wireframe;
-            else if (line.toggleType == 2) isActive = toggles.backfaceCulling;
-            else if (line.toggleType == 3) isActive = toggles.frustumCulling;
+    // Draw phase name
+    m_textShader->setVec4("textColor", glm::vec4(0.7f, 0.7f, 0.75f, 1.0f));
+    renderText(phaseName, overlayX + padding, overlayY + padding + charH + 4.0f, scale);
 
-            // Set color based on state
-            if (line.text.find("===") != std::string::npos) {
-                m_textShader->setVec4("textColor", headerColor);
-            } else if (isActive) {
-                m_textShader->setVec4("textColor", activeColor);
-            } else {
-                m_textShader->setVec4("textColor", normalColor);
-            }
-            renderText(line.text, overlayX + padding, textY, scale);
-        }
-        textY += lineHeight;
+    // Draw progress bar
+    float barY = overlayY + padding * 2 + charH * 2;
+    float barWidth = overlayWidth - 2 * padding;
+    renderProgressBar(overlayX + padding, barY, barWidth, progressBarHeight, totalProgress);
+
+    // Draw percentage
+    std::ostringstream percentStr;
+    percentStr << std::fixed << std::setprecision(0) << (totalProgress * 100.0f) << "%";
+    m_textShader->setVec4("bgColor", glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+    m_textShader->setVec4("textColor", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    std::string pct = percentStr.str();
+    float pctX = overlayX + (overlayWidth - pct.length() * charW) / 2.0f;
+    renderText(pct, pctX, barY + (progressBarHeight - charH) / 2.0f, scale);
+
+    // Draw queued count if any
+    if (queuedCount > 0) {
+        m_textShader->setVec4("textColor", glm::vec4(0.6f, 0.6f, 0.65f, 1.0f));
+        std::ostringstream queueStr;
+        queueStr << "+" << queuedCount << " queued";
+        float queueY = overlayY + overlayHeight - charH - padding;
+        renderText(queueStr.str(), overlayX + padding, queueY, scale);
     }
 
     // Restore state

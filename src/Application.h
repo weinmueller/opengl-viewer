@@ -6,6 +6,7 @@
 #include "renderer/Camera.h"
 #include "scene/Scene.h"
 #include "mesh/Mesh.h"
+#include "geometry/SubdivisionManager.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -35,6 +36,7 @@ private:
 
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;
+    std::unique_ptr<SubdivisionManager> m_subdivisionManager;
     Camera m_camera;
     Scene m_scene;
     Timer m_timer;

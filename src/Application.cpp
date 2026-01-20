@@ -11,6 +11,10 @@ Application::Application(int width, int height, const std::string& title, float 
     m_window = std::make_unique<Window>(width, height, title);
     m_renderer = std::make_unique<Renderer>();
     m_renderer->init(width, height);
+    m_subdivisionManager = std::make_unique<SubdivisionManager>();
+
+    // Pass subdivision manager to renderer for progress display
+    m_renderer->setSubdivisionManager(m_subdivisionManager.get());
 
     setupCallbacks();
 }
@@ -61,13 +65,28 @@ int Application::run(const std::vector<std::string>& meshPaths) {
 }
 
 void Application::processInput() {
-    if (m_window->isKeyPressed(GLFW_KEY_ESCAPE)) {
-        glfwSetWindowShouldClose(m_window->getHandle(), true);
+    // Arrow keys for camera orbit (continuous while held)
+    const float orbitSpeed = 2.0f;
+
+    if (m_window->isKeyPressed(GLFW_KEY_LEFT)) {
+        m_camera.orbit(orbitSpeed, 0.0f);
+    }
+    if (m_window->isKeyPressed(GLFW_KEY_RIGHT)) {
+        m_camera.orbit(-orbitSpeed, 0.0f);
+    }
+    if (m_window->isKeyPressed(GLFW_KEY_UP)) {
+        m_camera.orbit(0.0f, orbitSpeed);
+    }
+    if (m_window->isKeyPressed(GLFW_KEY_DOWN)) {
+        m_camera.orbit(0.0f, -orbitSpeed);
     }
 }
 
 void Application::update(float deltaTime) {
     (void)deltaTime;
+
+    // Process completed subdivision tasks (GPU upload on main thread)
+    m_subdivisionManager->processCompletedTasks();
 
     // Update scene objects (checks for completed async GPU uploads)
     m_scene.update();
@@ -83,6 +102,14 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
 
     if (action == GLFW_PRESS) {
         switch (key) {
+            case GLFW_KEY_ESCAPE:
+                // Cancel subdivision if busy, otherwise exit
+                if (m_subdivisionManager->isBusy()) {
+                    m_subdivisionManager->cancelAll();
+                } else {
+                    glfwSetWindowShouldClose(m_window->getHandle(), true);
+                }
+                break;
             case GLFW_KEY_W:
                 m_renderer->toggleWireframe();
                 break;
@@ -222,21 +249,25 @@ void Application::focusOnScene() {
 }
 
 void Application::subdivideSelected(bool smooth) {
-    bool anySubdivided = false;
+    bool anyQueued = false;
 
     // Subdivide selected objects first
     for (const auto& obj : m_scene.getObjects()) {
         if (obj->isSelected() && obj->canSubdivide()) {
-            obj->subdivide(smooth, m_creaseAngle);
-            anySubdivided = true;
+            auto task = std::make_unique<SubdivisionTask>(
+                obj.get(), obj->getName(), obj->getMeshData(), smooth, m_creaseAngle);
+            m_subdivisionManager->submitTask(std::move(task));
+            anyQueued = true;
         }
     }
 
     // If nothing was selected, subdivide only visible objects (in frustum)
-    if (!anySubdivided) {
+    if (!anyQueued) {
         for (const auto& obj : m_scene.getObjects()) {
             if (obj->canSubdivide() && m_renderer->isVisible(obj->getWorldBounds())) {
-                obj->subdivide(smooth, m_creaseAngle);
+                auto task = std::make_unique<SubdivisionTask>(
+                    obj.get(), obj->getName(), obj->getMeshData(), smooth, m_creaseAngle);
+                m_subdivisionManager->submitTask(std::move(task));
             }
         }
     }

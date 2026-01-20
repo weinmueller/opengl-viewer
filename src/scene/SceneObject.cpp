@@ -59,6 +59,20 @@ void SceneObject::subdivide(bool smooth, float creaseAngle) {
               << ", Triangles: " << numTriangles << std::endl;
 }
 
+void SceneObject::applySubdividedMesh(MeshData&& data) {
+    m_meshData = std::move(data);
+
+    // Use async upload for double-buffering (GPU upload on main thread)
+    if (!m_mesh) {
+        m_mesh = std::make_shared<Mesh>();
+    }
+    m_mesh->uploadAsync(m_meshData);
+
+    // Update bounds immediately from mesh data
+    m_localBounds = BoundingBox(m_meshData.minBounds, m_meshData.maxBounds);
+    updateWorldBounds();
+}
+
 void SceneObject::setPosition(const glm::vec3& position) {
     m_position = position;
     updateModelMatrix();
