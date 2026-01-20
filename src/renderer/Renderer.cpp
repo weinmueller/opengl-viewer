@@ -112,6 +112,12 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
 
     glm::mat4 view = camera.getViewMatrix();
     glm::mat4 projection = camera.getProjectionMatrix(aspectRatio);
+    glm::mat4 viewProjection = projection * view;
+
+    // Update frustum for culling
+    if (m_frustumCulling) {
+        m_frustum.update(viewProjection);
+    }
 
     m_meshShader->setMat4("view", view);
     m_meshShader->setMat4("projection", projection);
@@ -128,12 +134,21 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     m_meshShader->setFloat("rimStrength", m_rimLight.strength);
     m_meshShader->setVec3("rimColor", m_rimLight.color);
 
-    size_t index = 0;
+    m_visibleObjects = 0;
+    m_culledObjects = 0;
+
     for (const auto& obj : scene.getObjects()) {
         if (!obj->isVisible() || !obj->getMesh()) {
-            ++index;
             continue;
         }
+
+        // Frustum culling
+        if (m_frustumCulling && !m_frustum.isBoxVisible(obj->getWorldBounds())) {
+            ++m_culledObjects;
+            continue;
+        }
+
+        ++m_visibleObjects;
 
         m_meshShader->setMat4("model", obj->getModelMatrix());
 
@@ -151,11 +166,14 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
         } else {
             obj->draw();
         }
-        ++index;
     }
 
     // Render help overlay on top
-    m_helpOverlay.render(m_pickingWidth, m_pickingHeight);
+    ToggleStates toggles;
+    toggles.wireframe = m_wireframe;
+    toggles.backfaceCulling = m_backfaceCulling;
+    toggles.frustumCulling = m_frustumCulling;
+    m_helpOverlay.render(m_pickingWidth, m_pickingHeight, toggles);
 }
 
 int Renderer::pick(const Scene& scene, const Camera& camera, float aspectRatio, int mouseX, int mouseY) {

@@ -315,28 +315,34 @@ void HelpOverlay::renderQuad(float x, float y, float width, float height) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void HelpOverlay::render(int screenWidth, int screenHeight) {
+void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& toggles) {
     if (!m_visible) return;
 
     m_screenWidth = screenWidth;
     m_screenHeight = screenHeight;
 
-    // Help content - compact format
-    const std::vector<std::string> helpLines = {
-        "=== CONTROLS ===",
-        "H   Help toggle",
-        "W   Wireframe",
-        "C   Culling",
-        "F   Focus",
-        "S   Subdivide (smooth)",
-        "D   Subdivide (midpoint)",
-        "ESC Exit",
-        "",
-        "=== MOUSE ===",
-        "Left    Orbit",
-        "Middle  Pan",
-        "Right   Select",
-        "Scroll  Zoom",
+    // Help content with toggle indicators
+    struct HelpLine {
+        std::string text;
+        int toggleType;  // 0=none, 1=wireframe, 2=backface, 3=frustum
+    };
+
+    const std::vector<HelpLine> helpLines = {
+        {"=== CONTROLS ===", 0},
+        {"H   Help toggle", 0},
+        {"W   Wireframe", 1},
+        {"C   Back-face culling", 2},
+        {"G   Frustum culling", 3},
+        {"F   Focus", 0},
+        {"S   Subdivide (smooth)", 0},
+        {"D   Subdivide (midpoint)", 0},
+        {"ESC Exit", 0},
+        {"", 0},
+        {"=== MOUSE ===", 0},
+        {"Left    Orbit", 0},
+        {"Middle  Pan", 0},
+        {"Right   Select", 0},
+        {"Scroll  Zoom", 0},
     };
 
     const float scale = 1.5f;
@@ -348,7 +354,7 @@ void HelpOverlay::render(int screenWidth, int screenHeight) {
     // Calculate overlay dimensions
     size_t maxLen = 0;
     for (const auto& line : helpLines) {
-        maxLen = std::max(maxLen, line.length());
+        maxLen = std::max(maxLen, line.text.length());
     }
     float overlayWidth = maxLen * charW + padding * 2;
     float overlayHeight = helpLines.size() * lineHeight + padding * 2;
@@ -383,20 +389,31 @@ void HelpOverlay::render(int screenWidth, int screenHeight) {
     renderQuad(overlayX, overlayY, borderWidth, overlayHeight);  // Left
     renderQuad(overlayX + overlayWidth - borderWidth, overlayY, borderWidth, overlayHeight);  // Right
 
-    // Draw text
-    m_textShader->setVec4("textColor", glm::vec4(0.9f, 0.9f, 0.95f, 1.0f));
+    // Colors
+    const glm::vec4 headerColor(0.5f, 0.8f, 1.0f, 1.0f);    // Blue for headers
+    const glm::vec4 normalColor(0.7f, 0.7f, 0.75f, 1.0f);   // Gray for normal text
+    const glm::vec4 activeColor(0.4f, 1.0f, 0.5f, 1.0f);    // Bright green for ON
+
     m_textShader->setVec4("bgColor", glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
 
     float textY = overlayY + padding;
     for (const auto& line : helpLines) {
-        if (!line.empty()) {
-            // Highlight section headers
-            if (line.find("===") != std::string::npos) {
-                m_textShader->setVec4("textColor", glm::vec4(0.5f, 0.8f, 1.0f, 1.0f));
+        if (!line.text.empty()) {
+            // Determine if this toggle is active
+            bool isActive = false;
+            if (line.toggleType == 1) isActive = toggles.wireframe;
+            else if (line.toggleType == 2) isActive = toggles.backfaceCulling;
+            else if (line.toggleType == 3) isActive = toggles.frustumCulling;
+
+            // Set color based on state
+            if (line.text.find("===") != std::string::npos) {
+                m_textShader->setVec4("textColor", headerColor);
+            } else if (isActive) {
+                m_textShader->setVec4("textColor", activeColor);
             } else {
-                m_textShader->setVec4("textColor", glm::vec4(0.9f, 0.9f, 0.95f, 1.0f));
+                m_textShader->setVec4("textColor", normalColor);
             }
-            renderText(line, overlayX + padding, textY, scale);
+            renderText(line.text, overlayX + padding, textY, scale);
         }
         textY += lineHeight;
     }

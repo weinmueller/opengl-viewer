@@ -101,6 +101,10 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
             case GLFW_KEY_H:
                 m_renderer->toggleHelpOverlay();
                 break;
+            case GLFW_KEY_G:
+                m_renderer->toggleFrustumCulling();
+                std::cout << "Frustum culling: " << (m_renderer->isFrustumCulling() ? "ON" : "OFF") << std::endl;
+                break;
         }
     }
 }
@@ -220,7 +224,7 @@ void Application::focusOnScene() {
 void Application::subdivideSelected(bool smooth) {
     bool anySubdivided = false;
 
-    // Subdivide selected objects, or all if none selected
+    // Subdivide selected objects first
     for (const auto& obj : m_scene.getObjects()) {
         if (obj->isSelected() && obj->canSubdivide()) {
             obj->subdivide(smooth, m_creaseAngle);
@@ -228,10 +232,10 @@ void Application::subdivideSelected(bool smooth) {
         }
     }
 
-    // If nothing was selected, subdivide all objects
+    // If nothing was selected, subdivide only visible objects (in frustum)
     if (!anySubdivided) {
         for (const auto& obj : m_scene.getObjects()) {
-            if (obj->canSubdivide()) {
+            if (obj->canSubdivide() && m_renderer->isVisible(obj->getWorldBounds())) {
                 obj->subdivide(smooth, m_creaseAngle);
             }
         }

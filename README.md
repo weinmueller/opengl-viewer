@@ -9,7 +9,7 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **Modern OpenGL 4.6** - Uses Direct State Access (DSA) for efficient GPU resource management
 - **OBJ Mesh Loading** - Load multiple OBJ files simultaneously with automatic normal handling
 - **Object Picking** - Click to select objects with visual highlight feedback
-- **Mesh Subdivision** - Loop subdivision (smooth) and midpoint subdivision with crease/boundary preservation
+- **Mesh Subdivision** - Loop subdivision (smooth) and midpoint subdivision with crease/boundary preservation. Only subdivides visible objects when none selected.
 - **Parallel Processing** - OpenMP-accelerated subdivision for large meshes (4-5x speedup)
 - **GPU Double-Buffering** - Fence-synchronized buffer swapping for smooth geometry updates
 - **Back-face Culling** - Toggleable culling for ~50% faster rendering on closed meshes
@@ -18,7 +18,8 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **Rim Lighting** - Fresnel-based edge highlighting for better shape visibility
 - **Gradient Background** - Professional dark blue gradient backdrop
 - **Wireframe Mode** - Toggle wireframe rendering for mesh inspection
-- **Help Overlay** - In-window keyboard shortcut reference (H key)
+- **Help Overlay** - In-window keyboard shortcut reference with toggle indicators (H key)
+- **Frustum Culling** - Skip rendering objects outside camera view (G key)
 
 ## Screenshots
 
@@ -85,6 +86,7 @@ make
 | D | Subdivide mesh (midpoint - keeps shape) |
 | W | Toggle wireframe |
 | C | Toggle back-face culling |
+| G | Toggle frustum culling |
 | F | Focus on scene |
 | H | Show help overlay (keyboard shortcuts) |
 | ESC | Exit |
@@ -129,7 +131,7 @@ OpenGL/
 - [x] In-window help overlay (H key)
 - [x] Rim lighting for better mesh visibility
 - [x] Gradient background
-- [ ] Object-level frustum culling
+- [x] Object-level frustum culling (G key)
 - [ ] GPU-based subdivision (compute shaders)
 - [ ] LOD (Level of Detail) system
 - [ ] Material and texture support

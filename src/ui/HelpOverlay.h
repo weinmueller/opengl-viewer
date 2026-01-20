@@ -6,13 +6,20 @@
 #include <vector>
 #include <memory>
 
+// Toggle states for help overlay display
+struct ToggleStates {
+    bool wireframe{false};
+    bool backfaceCulling{true};
+    bool frustumCulling{true};
+};
+
 class HelpOverlay {
 public:
     HelpOverlay();
     ~HelpOverlay();
 
     void init();
-    void render(int screenWidth, int screenHeight);
+    void render(int screenWidth, int screenHeight, const ToggleStates& toggles);
 
     void setVisible(bool visible) { m_visible = visible; }
     bool isVisible() const { return m_visible; }

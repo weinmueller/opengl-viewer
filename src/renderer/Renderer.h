@@ -3,6 +3,8 @@
 #include "Camera.h"
 #include "core/Shader.h"
 #include "scene/Scene.h"
+#include "scene/Frustum.h"
+#include "scene/BoundingBox.h"
 #include "ui/HelpOverlay.h"
 #include <glm/glm.hpp>
 #include <glad/gl.h>
@@ -60,6 +62,17 @@ public:
     Background& getBackground() { return m_background; }
     const Background& getBackground() const { return m_background; }
 
+    void setFrustumCulling(bool enabled) { m_frustumCulling = enabled; }
+    bool isFrustumCulling() const { return m_frustumCulling; }
+    void toggleFrustumCulling() { m_frustumCulling = !m_frustumCulling; }
+
+    // Get last frame's culling stats
+    int getVisibleObjects() const { return m_visibleObjects; }
+    int getCulledObjects() const { return m_culledObjects; }
+
+    // Check if a bounding box is visible in the current frustum
+    bool isVisible(const BoundingBox& box) const { return m_frustum.isBoxVisible(box); }
+
 private:
     void renderBackground();
     void initPickingFBO(int width, int height);
@@ -86,6 +99,11 @@ private:
     Background m_background;
     bool m_wireframe{false};
     bool m_backfaceCulling{true};
+    bool m_frustumCulling{true};
+
+    Frustum m_frustum;
+    int m_visibleObjects{0};
+    int m_culledObjects{0};
 
     HelpOverlay m_helpOverlay;
 };

@@ -50,7 +50,7 @@ cd build && cmake .. && make
 - OBJ mesh loading (multiple files supported)
 - Object picking with right-click selection
 - Selection highlighting (orange tint)
-- Mesh subdivision (S = Loop smooth, D = midpoint)
+- Mesh subdivision (S = Loop smooth, D = midpoint) - only visible objects when none selected
 - Crease-preserving subdivision (sharp edges detected via dihedral angle threshold)
 - **Parallel Loop subdivision** using OpenMP (4-5x speedup on multi-core CPUs)
 - **GPU double-buffering** with fence synchronization for smooth geometry updates
@@ -64,7 +64,8 @@ cd build && cmake .. && make
 - Wireframe toggle (W key)
 - Back-face culling toggle (C key) for performance vs. mesh compatibility
 - Focus on scene (F key)
-- In-window help overlay (H key) showing all keyboard shortcuts
+- In-window help overlay (H key) with toggle state indicators
+- Frustum culling toggle (G key)
 
 ## Future Improvements
 
@@ -73,7 +74,7 @@ cd build && cmake .. && make
 - [x] Double-buffered geometry with fence synchronization
 - [x] Back-face culling (toggle with C key)
 - [x] Cached normal matrix (avoids per-frame inverse computation)
-- [ ] Object-level frustum culling (skip objects outside camera view)
+- [x] Object-level frustum culling (G key to toggle)
 - [ ] GPU-based subdivision (compute shaders)
 - [ ] Add `glMultiDrawElementsIndirect` for batched rendering
 - [ ] Implement LOD (Level of Detail) system
