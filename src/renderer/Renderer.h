@@ -16,6 +16,16 @@ struct Light {
     float specular{0.5f};
 };
 
+struct RimLight {
+    glm::vec3 color{0.6f, 0.7f, 0.9f};  // Slight blue tint
+    float strength{0.4f};
+};
+
+struct Background {
+    glm::vec3 topColor{0.15f, 0.18f, 0.25f};     // Dark blue-gray
+    glm::vec3 bottomColor{0.05f, 0.05f, 0.08f};  // Near black
+};
+
 class Renderer {
 public:
     Renderer();
@@ -44,12 +54,24 @@ public:
     Light& getLight() { return m_light; }
     const Light& getLight() const { return m_light; }
 
+    RimLight& getRimLight() { return m_rimLight; }
+    const RimLight& getRimLight() const { return m_rimLight; }
+
+    Background& getBackground() { return m_background; }
+    const Background& getBackground() const { return m_background; }
+
 private:
+    void renderBackground();
     void initPickingFBO(int width, int height);
     void cleanupPickingFBO();
 
     std::unique_ptr<Shader> m_meshShader;
     std::unique_ptr<Shader> m_pickingShader;
+    std::unique_ptr<Shader> m_backgroundShader;
+
+    // Background quad VAO/VBO
+    GLuint m_backgroundVAO{0};
+    GLuint m_backgroundVBO{0};
 
     // Picking framebuffer
     GLuint m_pickingFBO{0};
@@ -60,6 +82,8 @@ private:
 
     glm::vec3 m_clearColor{0.1f, 0.1f, 0.15f};
     Light m_light;
+    RimLight m_rimLight;
+    Background m_background;
     bool m_wireframe{false};
     bool m_backfaceCulling{true};
 

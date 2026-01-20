@@ -5,11 +5,41 @@ Renderer::Renderer() {
 
 Renderer::~Renderer() {
     cleanupPickingFBO();
+    if (m_backgroundVAO) {
+        glDeleteVertexArrays(1, &m_backgroundVAO);
+    }
+    if (m_backgroundVBO) {
+        glDeleteBuffers(1, &m_backgroundVBO);
+    }
 }
 
 void Renderer::init(int width, int height) {
     m_meshShader = std::make_unique<Shader>("shaders/mesh.vert", "shaders/mesh.frag");
     m_pickingShader = std::make_unique<Shader>("shaders/picking.vert", "shaders/picking.frag");
+    m_backgroundShader = std::make_unique<Shader>("shaders/background.vert", "shaders/background.frag");
+
+    // Create full-screen quad for background
+    float quadVertices[] = {
+        // positions (NDC)
+        -1.0f,  1.0f,  // top-left
+        -1.0f, -1.0f,  // bottom-left
+         1.0f, -1.0f,  // bottom-right
+
+        -1.0f,  1.0f,  // top-left
+         1.0f, -1.0f,  // bottom-right
+         1.0f,  1.0f,  // top-right
+    };
+
+    glCreateVertexArrays(1, &m_backgroundVAO);
+    glCreateBuffers(1, &m_backgroundVBO);
+
+    glNamedBufferStorage(m_backgroundVBO, sizeof(quadVertices), quadVertices, 0);
+
+    glVertexArrayVertexBuffer(m_backgroundVAO, 0, m_backgroundVBO, 0, 2 * sizeof(float));
+    glEnableVertexArrayAttrib(m_backgroundVAO, 0);
+    glVertexArrayAttribFormat(m_backgroundVAO, 0, 2, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(m_backgroundVAO, 0, 0);
+
     initPickingFBO(width, height);
     m_helpOverlay.init();
 }
@@ -66,8 +96,10 @@ void Renderer::resize(int width, int height) {
 }
 
 void Renderer::render(const Scene& scene, const Camera& camera, float aspectRatio) {
-    glClearColor(m_clearColor.r, m_clearColor.g, m_clearColor.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Render gradient background first
+    renderBackground();
 
     // Apply backface culling setting
     if (m_backfaceCulling) {
@@ -85,11 +117,16 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     m_meshShader->setMat4("projection", projection);
     m_meshShader->setVec3("viewPos", camera.getPosition());
 
+    // Main light
     m_meshShader->setVec3("light.direction", glm::normalize(m_light.direction));
     m_meshShader->setVec3("light.color", m_light.color);
     m_meshShader->setFloat("light.ambient", m_light.ambient);
     m_meshShader->setFloat("light.diffuse", m_light.diffuse);
     m_meshShader->setFloat("light.specular", m_light.specular);
+
+    // Rim lighting
+    m_meshShader->setFloat("rimStrength", m_rimLight.strength);
+    m_meshShader->setVec3("rimColor", m_rimLight.color);
 
     size_t index = 0;
     for (const auto& obj : scene.getObjects()) {
@@ -177,4 +214,22 @@ int Renderer::pick(const Scene& scene, const Camera& camera, float aspectRatio, 
         return -1;
     }
     return static_cast<int>(pickedID - 1);
+}
+
+void Renderer::renderBackground() {
+    // Disable depth writing for background
+    glDepthMask(GL_FALSE);
+    glDisable(GL_DEPTH_TEST);
+
+    m_backgroundShader->use();
+    m_backgroundShader->setVec3("topColor", m_background.topColor);
+    m_backgroundShader->setVec3("bottomColor", m_background.bottomColor);
+
+    glBindVertexArray(m_backgroundVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);  // Full-screen quad (2 triangles)
+    glBindVertexArray(0);
+
+    // Re-enable depth for scene rendering
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
 }

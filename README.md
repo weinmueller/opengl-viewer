@@ -15,6 +15,8 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **Back-face Culling** - Toggleable culling for ~50% faster rendering on closed meshes
 - **Orbit Camera** - Intuitive camera controls for 3D navigation
 - **Blinn-Phong Lighting** - Realistic shading with directional light
+- **Rim Lighting** - Fresnel-based edge highlighting for better shape visibility
+- **Gradient Background** - Professional dark blue gradient backdrop
 - **Wireframe Mode** - Toggle wireframe rendering for mesh inspection
 - **Help Overlay** - In-window keyboard shortcut reference (H key)
 
@@ -108,7 +110,9 @@ OpenGL/
 │   ├── picking.vert          # Object picking vertex shader
 │   ├── picking.frag          # Object picking fragment shader
 │   ├── text.vert             # Text rendering vertex shader
-│   └── text.frag             # Text rendering fragment shader
+│   ├── text.frag             # Text rendering fragment shader
+│   ├── background.vert       # Background gradient vertex shader
+│   └── background.frag       # Background gradient fragment shader
 ├── assets/
 │   └── meshes/               # Sample mesh files
 └── external/                 # Third-party libraries
@@ -123,7 +127,8 @@ OpenGL/
 - [x] Back-face culling with toggle
 - [x] Cached normal matrix optimization
 - [x] In-window help overlay (H key)
-- [ ] Better mesh visualization (improved lighting/shading)
+- [x] Rim lighting for better mesh visibility
+- [x] Gradient background
 - [ ] Object-level frustum culling
 - [ ] GPU-based subdivision (compute shaders)
 - [ ] LOD (Level of Detail) system

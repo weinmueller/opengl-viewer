@@ -59,6 +59,8 @@ cd build && cmake .. && make
 - Mesh statistics printed to terminal
 - Orbit camera (left mouse), pan (middle mouse), zoom (scroll)
 - Blinn-Phong lighting with directional light
+- Rim/Fresnel lighting for better edge visibility
+- Gradient background (dark blue vertical gradient)
 - Wireframe toggle (W key)
 - Back-face culling toggle (C key) for performance vs. mesh compatibility
 - Focus on scene (F key)
@@ -80,7 +82,8 @@ cd build && cmake .. && make
 - [ ] Background tessellation thread with progress indicators
 
 ### User Interface
-- [ ] Improved mesh visibility (better lighting/shading)
+- [x] Improved mesh visibility (rim lighting)
+- [x] Gradient background
 - [x] In-window help overlay (H key to show controls)
 
 ### Additional Features
