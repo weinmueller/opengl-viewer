@@ -20,8 +20,12 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **Gradient Background** - Professional dark blue gradient backdrop
 - **Wireframe Mode** - Toggle wireframe rendering for mesh inspection
 - **Help Overlay** - In-window keyboard shortcut reference with toggle indicators (H key)
-- **Progress Overlay** - Shows subdivision progress with phase name, percentage, and queued task count
+- **Progress Overlay** - Shows subdivision/LOD progress with phase name, percentage, and queued task count
 - **Frustum Culling** - Skip rendering objects outside camera view (G key)
+- **LOD System** - Automatic Level of Detail with QEM-based mesh simplification
+- **6 LOD Levels** - 100% → 50% → 30% → 15% → 7% → 3% triangle reduction
+- **Screen-Space LOD Selection** - Automatic detail adjustment based on object screen size
+- **LOD Debug Colors** - Visualize LOD levels with color coding (K key)
 
 ## Screenshots
 
@@ -90,9 +94,11 @@ make
 | W | Toggle wireframe |
 | C | Toggle back-face culling |
 | G | Toggle frustum culling |
+| L | Toggle LOD system |
+| K | Toggle LOD debug colors |
 | F | Focus on scene |
 | H | Show help overlay (keyboard shortcuts) |
-| ESC | Cancel active subdivision / Exit |
+| ESC | Cancel active subdivision/LOD generation / Exit |
 
 Mesh statistics (vertices, triangles) are printed to the terminal after loading and subdivision.
 
@@ -108,6 +114,7 @@ OpenGL/
 │   ├── scene/                # Scene graph, Objects
 │   ├── mesh/                 # Mesh loading and GPU resources
 │   ├── geometry/             # Subdivision algorithms and background threading
+│   ├── lod/                  # Level of Detail system (LODMesh, MeshSimplifier, LODManager)
 │   └── ui/                   # User interface (HelpOverlay, ProgressOverlay)
 ├── shaders/
 │   ├── mesh.vert             # Main vertex shader
@@ -136,8 +143,8 @@ OpenGL/
 - [x] Gradient background
 - [x] Object-level frustum culling (G key)
 - [x] Background tessellation with progress indicators
+- [x] LOD (Level of Detail) system with QEM mesh simplification
 - [ ] GPU-based subdivision (compute shaders)
-- [ ] LOD (Level of Detail) system
 - [ ] Material and texture support
 
 ## Third-Party Libraries

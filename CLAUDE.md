@@ -40,7 +40,7 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 
 ### User Interface
 - **HelpOverlay** (`src/ui/HelpOverlay.h`) - In-window help with bitmap font text rendering
-- **ProgressOverlay** (`src/ui/ProgressOverlay.h`) - Subdivision progress bar display
+- **ProgressOverlay** (`src/ui/ProgressOverlay.h`) - Subdivision and LOD generation progress bar display
 
 ## Technology Stack
 - C++17
@@ -82,9 +82,10 @@ cd build && cmake .. && make
 - In-window help overlay (H key) with toggle state indicators
 - Frustum culling toggle (G key)
 - **LOD (Level of Detail) system** with automatic generation on mesh load
-- QEM-based mesh simplification (4 LOD levels: 100%, 50%, 25%, 12.5%)
+- QEM-based mesh simplification (6 LOD levels: 100%, 50%, 30%, 15%, 7%, 3%)
 - LOD toggle (L key) and debug colors (K key) showing LOD levels
 - Screen-space LOD selection with hysteresis to prevent popping
+- Automatic LOD regeneration after mesh subdivision
 - ESC cancels active subdivision/LOD generation (or exits if idle)
 
 ## Future Improvements
