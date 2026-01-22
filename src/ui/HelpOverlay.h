@@ -11,6 +11,8 @@ struct ToggleStates {
     bool wireframe{false};
     bool backfaceCulling{true};
     bool frustumCulling{true};
+    bool lodEnabled{true};
+    bool lodDebugColors{false};
 };
 
 class HelpOverlay {

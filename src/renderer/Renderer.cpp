@@ -1,4 +1,6 @@
 #include "Renderer.h"
+#include "lod/LODSelector.h"
+#include "lod/LODManager.h"
 
 Renderer::Renderer() {
 }
@@ -138,8 +140,18 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     m_visibleObjects = 0;
     m_culledObjects = 0;
 
+    // LOD debug colors (Green -> Yellow -> Orange -> Red for LOD 0-5)
+    static const glm::vec3 lodDebugColors[] = {
+        {0.2f, 1.0f, 0.3f},   // LOD 0: Green (highest detail)
+        {0.6f, 1.0f, 0.2f},   // LOD 1: Yellow-green
+        {1.0f, 1.0f, 0.2f},   // LOD 2: Yellow
+        {1.0f, 0.7f, 0.2f},   // LOD 3: Orange-yellow
+        {1.0f, 0.4f, 0.2f},   // LOD 4: Orange
+        {1.0f, 0.2f, 0.2f}    // LOD 5: Red (lowest detail)
+    };
+
     for (const auto& obj : scene.getObjects()) {
-        if (!obj->isVisible() || !obj->getMesh()) {
+        if (!obj->isVisible()) {
             continue;
         }
 
@@ -149,12 +161,43 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
             continue;
         }
 
+        // Calculate screen size for LOD selection
+        float screenSize = 10000.0f;  // Default to max detail
+        if (m_lodEnabled) {
+            glm::vec3 worldCenter = obj->getWorldBounds().getCenter();
+            float worldRadius = obj->getWorldBounds().getRadius();
+            screenSize = LODSelector::calculateScreenSize(
+                worldCenter, worldRadius, view, projection, m_pickingHeight);
+        }
+
+        // Get appropriate mesh (LOD or original)
+        Mesh* meshToRender = nullptr;
+        if (m_lodEnabled && obj->hasLOD()) {
+            meshToRender = const_cast<SceneObject*>(obj.get())->getMeshForRendering(screenSize);
+        } else {
+            meshToRender = obj->getMesh();
+        }
+
+        if (!meshToRender) {
+            continue;
+        }
+
         ++m_visibleObjects;
 
         m_meshShader->setMat4("model", obj->getModelMatrix());
 
-        // Highlight selected objects
+        // Determine color
         glm::vec3 color = obj->getColor();
+
+        // LOD debug colors override
+        if (m_lodDebugColors && obj->hasLOD()) {
+            int lodIndex = obj->getCurrentLODIndex();
+            if (lodIndex >= 0 && lodIndex < 6) {
+                color = lodDebugColors[lodIndex];
+            }
+        }
+
+        // Highlight selected objects
         if (obj->isSelected()) {
             color = glm::mix(color, glm::vec3(1.0f, 0.5f, 0.0f), 0.5f);
         }
@@ -163,9 +206,11 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
         m_meshShader->setMat3("normalMatrix", obj->getNormalMatrix());
 
         if (m_wireframe) {
-            obj->drawWireframe();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            meshToRender->draw();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         } else {
-            obj->draw();
+            meshToRender->draw();
         }
     }
 
@@ -174,10 +219,12 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     toggles.wireframe = m_wireframe;
     toggles.backfaceCulling = m_backfaceCulling;
     toggles.frustumCulling = m_frustumCulling;
+    toggles.lodEnabled = m_lodEnabled;
+    toggles.lodDebugColors = m_lodDebugColors;
     m_helpOverlay.render(m_pickingWidth, m_pickingHeight, toggles);
 
-    // Render progress overlay if subdivision is active
-    m_progressOverlay.render(m_pickingWidth, m_pickingHeight, m_subdivisionManager);
+    // Render progress overlay if subdivision or LOD generation is active
+    m_progressOverlay.render(m_pickingWidth, m_pickingHeight, m_subdivisionManager, m_lodManager);
 }
 
 int Renderer::pick(const Scene& scene, const Camera& camera, float aspectRatio, int mouseX, int mouseY) {

@@ -71,6 +71,10 @@ void SceneObject::applySubdividedMesh(MeshData&& data) {
     // Update bounds immediately from mesh data
     m_localBounds = BoundingBox(m_meshData.minBounds, m_meshData.maxBounds);
     updateWorldBounds();
+
+    // Clear existing LOD since mesh has changed - needs regeneration
+    m_lodMesh.clear();
+    m_needsLODRegeneration = true;
 }
 
 void SceneObject::setPosition(const glm::vec3& position) {
@@ -127,4 +131,15 @@ void SceneObject::drawWireframe() const {
     if (m_visible && m_mesh) {
         m_mesh->drawWireframe();
     }
+}
+
+void SceneObject::applyLODLevels(std::vector<LODLevel>&& levels) {
+    m_lodMesh.setLevels(std::move(levels));
+}
+
+Mesh* SceneObject::getMeshForRendering(float screenSize) {
+    if (m_lodMesh.hasLOD()) {
+        return m_lodMesh.selectLOD(screenSize);
+    }
+    return m_mesh.get();
 }

@@ -2,6 +2,7 @@
 
 #include "core/Shader.h"
 #include "geometry/SubdivisionManager.h"
+#include "lod/LODManager.h"
 #include <glad/gl.h>
 #include <string>
 #include <memory>
@@ -12,7 +13,9 @@ public:
     ~ProgressOverlay();
 
     void init();
-    void render(int screenWidth, int screenHeight, const SubdivisionManager* manager);
+    void render(int screenWidth, int screenHeight,
+                const SubdivisionManager* subdivManager,
+                const LODManager* lodManager = nullptr);
 
 private:
     void createFontTexture();

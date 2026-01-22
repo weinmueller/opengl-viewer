@@ -12,6 +12,7 @@
 #include <memory>
 
 class SubdivisionManager;
+class LODManager;
 
 struct Light {
     glm::vec3 direction{-0.5f, -1.0f, -0.3f};
@@ -57,6 +58,16 @@ public:
     bool isHelpVisible() const { return m_helpOverlay.isVisible(); }
 
     void setSubdivisionManager(SubdivisionManager* manager) { m_subdivisionManager = manager; }
+    void setLODManager(LODManager* manager) { m_lodManager = manager; }
+
+    // LOD controls
+    void setLODEnabled(bool enabled) { m_lodEnabled = enabled; }
+    bool isLODEnabled() const { return m_lodEnabled; }
+    void toggleLOD() { m_lodEnabled = !m_lodEnabled; }
+
+    void setLODDebugColors(bool enabled) { m_lodDebugColors = enabled; }
+    bool isLODDebugColors() const { return m_lodDebugColors; }
+    void toggleLODDebugColors() { m_lodDebugColors = !m_lodDebugColors; }
 
     Light& getLight() { return m_light; }
     const Light& getLight() const { return m_light; }
@@ -113,4 +124,8 @@ private:
     HelpOverlay m_helpOverlay;
     ProgressOverlay m_progressOverlay;
     SubdivisionManager* m_subdivisionManager{nullptr};
+    LODManager* m_lodManager{nullptr};
+
+    bool m_lodEnabled{true};
+    bool m_lodDebugColors{false};
 };

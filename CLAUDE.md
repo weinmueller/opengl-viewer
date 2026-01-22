@@ -30,6 +30,14 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - **SubdivisionManager** (`src/geometry/SubdivisionManager.h`) - Background thread management for subdivision
 - **SubdivisionTask** (`src/geometry/SubdivisionTask.h`) - Task and progress tracking structures
 
+### Level of Detail (LOD)
+- **LODLevel** (`src/lod/LODLevel.h`) - Single LOD level with mesh data and threshold
+- **LODMesh** (`src/lod/LODMesh.h`) - Container managing multiple LOD levels per object
+- **LODSelector** (`src/lod/LODSelector.h`) - Screen-space size calculation for LOD selection
+- **MeshSimplifier** (`src/lod/MeshSimplifier.h`) - QEM-based mesh decimation algorithm
+- **LODManager** (`src/lod/LODManager.h`) - Background thread manager for LOD generation
+- **LODTask** (`src/lod/LODTask.h`) - Task and progress tracking for LOD generation
+
 ### User Interface
 - **HelpOverlay** (`src/ui/HelpOverlay.h`) - In-window help with bitmap font text rendering
 - **ProgressOverlay** (`src/ui/ProgressOverlay.h`) - Subdivision progress bar display
@@ -73,7 +81,11 @@ cd build && cmake .. && make
 - Focus on scene (F key)
 - In-window help overlay (H key) with toggle state indicators
 - Frustum culling toggle (G key)
-- ESC cancels active subdivision (or exits if idle)
+- **LOD (Level of Detail) system** with automatic generation on mesh load
+- QEM-based mesh simplification (4 LOD levels: 100%, 50%, 25%, 12.5%)
+- LOD toggle (L key) and debug colors (K key) showing LOD levels
+- Screen-space LOD selection with hysteresis to prevent popping
+- ESC cancels active subdivision/LOD generation (or exits if idle)
 
 ## Future Improvements
 
@@ -86,7 +98,7 @@ cd build && cmake .. && make
 - [x] Background tessellation thread with progress indicators
 - [ ] GPU-based subdivision (compute shaders)
 - [ ] Add `glMultiDrawElementsIndirect` for batched rendering
-- [ ] Implement LOD (Level of Detail) system
+- [x] Implement LOD (Level of Detail) system
 - [ ] Add occlusion culling for complex scenes
 - [ ] Persistent mapped buffers for streaming updates
 

@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "mesh/MeshLoader.h"
 #include "mesh/MeshData.h"
+#include "lod/LODTask.h"
 #include <iostream>
 #include <GLFW/glfw3.h>
 
@@ -12,9 +13,11 @@ Application::Application(int width, int height, const std::string& title, float 
     m_renderer = std::make_unique<Renderer>();
     m_renderer->init(width, height);
     m_subdivisionManager = std::make_unique<SubdivisionManager>();
+    m_lodManager = std::make_unique<LODManager>();
 
-    // Pass subdivision manager to renderer for progress display
+    // Pass managers to renderer for progress display
     m_renderer->setSubdivisionManager(m_subdivisionManager.get());
+    m_renderer->setLODManager(m_lodManager.get());
 
     setupCallbacks();
 }
@@ -88,6 +91,17 @@ void Application::update(float deltaTime) {
     // Process completed subdivision tasks (GPU upload on main thread)
     m_subdivisionManager->processCompletedTasks();
 
+    // Process completed LOD generation tasks
+    m_lodManager->processCompletedTasks();
+
+    // Check for objects that need LOD regeneration (after subdivision)
+    for (const auto& obj : m_scene.getObjects()) {
+        if (obj->needsLODRegeneration()) {
+            obj->clearLODRegenerationFlag();
+            generateLODForObject(obj.get());
+        }
+    }
+
     // Update scene objects (checks for completed async GPU uploads)
     m_scene.update();
 }
@@ -131,6 +145,14 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
             case GLFW_KEY_G:
                 m_renderer->toggleFrustumCulling();
                 std::cout << "Frustum culling: " << (m_renderer->isFrustumCulling() ? "ON" : "OFF") << std::endl;
+                break;
+            case GLFW_KEY_L:
+                m_renderer->toggleLOD();
+                std::cout << "LOD: " << (m_renderer->isLODEnabled() ? "ON" : "OFF") << std::endl;
+                break;
+            case GLFW_KEY_K:
+                m_renderer->toggleLODDebugColors();
+                std::cout << "LOD debug colors: " << (m_renderer->isLODDebugColors() ? "ON" : "OFF") << std::endl;
                 break;
         }
     }
@@ -221,6 +243,9 @@ bool Application::loadMesh(const std::string& path) {
     SceneObject* obj = m_scene.addObject(name);
     obj->setMeshData(meshData);
 
+    // Generate LOD levels automatically for the loaded mesh
+    generateLODForObject(obj);
+
     // Assign different colors to each object
     static const glm::vec3 colors[] = {
         {0.8f, 0.3f, 0.3f},  // Red
@@ -271,4 +296,20 @@ void Application::subdivideSelected(bool smooth) {
             }
         }
     }
+}
+
+void Application::generateLODForObject(SceneObject* obj) {
+    if (!obj || !obj->canSubdivide()) {
+        return;
+    }
+
+    // Only generate LOD if mesh has enough triangles to benefit
+    const MeshData& meshData = obj->getMeshData();
+    uint32_t triangleCount = static_cast<uint32_t>(meshData.indices.size() / 3);
+    if (triangleCount < 100) {
+        return;
+    }
+
+    auto task = std::make_unique<LODTask>(obj, obj->getName(), meshData);
+    m_lodManager->submitTask(std::move(task));
 }

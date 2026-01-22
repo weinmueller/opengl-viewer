@@ -7,6 +7,7 @@
 #include "scene/Scene.h"
 #include "mesh/Mesh.h"
 #include "geometry/SubdivisionManager.h"
+#include "lod/LODManager.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -33,10 +34,12 @@ private:
     bool loadMesh(const std::string& path);
     void focusOnScene();
     void subdivideSelected(bool smooth);
+    void generateLODForObject(SceneObject* obj);
 
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<SubdivisionManager> m_subdivisionManager;
+    std::unique_ptr<LODManager> m_lodManager;
     Camera m_camera;
     Scene m_scene;
     Timer m_timer;

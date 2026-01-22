@@ -331,23 +331,45 @@ void ProgressOverlay::renderProgressBar(float x, float y, float width, float hei
     renderQuad(x + width - borderWidth, y, borderWidth, height);
 }
 
-void ProgressOverlay::render(int screenWidth, int screenHeight, const SubdivisionManager* manager) {
-    if (!manager || !manager->isBusy()) {
+void ProgressOverlay::render(int screenWidth, int screenHeight,
+                             const SubdivisionManager* subdivManager,
+                             const LODManager* lodManager) {
+    // Check if subdivision is busy
+    bool subdivBusy = subdivManager && subdivManager->isBusy();
+    bool lodBusy = lodManager && lodManager->isBusy();
+
+    if (!subdivBusy && !lodBusy) {
         return;
     }
 
     m_screenWidth = screenWidth;
     m_screenHeight = screenHeight;
 
-    const SubdivisionProgress* progress = manager->getActiveProgress();
-    if (!progress) {
-        return;
-    }
+    std::string objectName;
+    float totalProgress = 0.0f;
+    std::string phaseName;
+    size_t queuedCount = 0;
+    std::string taskType;
 
-    std::string objectName = manager->getActiveObjectName();
-    float totalProgress = progress->totalProgress.load(std::memory_order_relaxed);
-    const char* phaseName = progress->getPhaseName();
-    size_t queuedCount = manager->getQueuedTaskCount();
+    if (subdivBusy) {
+        const SubdivisionProgress* progress = subdivManager->getActiveProgress();
+        if (!progress) return;
+
+        objectName = subdivManager->getActiveObjectName();
+        totalProgress = progress->totalProgress.load(std::memory_order_relaxed);
+        phaseName = progress->getPhaseName();
+        queuedCount = subdivManager->getQueuedTaskCount();
+        taskType = "Subdividing";
+    } else if (lodBusy) {
+        const LODProgress* progress = lodManager->getActiveProgress();
+        if (!progress) return;
+
+        objectName = lodManager->getActiveObjectName();
+        totalProgress = progress->totalProgress.load(std::memory_order_relaxed);
+        phaseName = progress->getPhaseName();
+        queuedCount = lodManager->getQueuedTaskCount();
+        taskType = "Generating LOD";
+    }
 
     // Overlay dimensions
     const float scale = 1.5f;
@@ -391,7 +413,7 @@ void ProgressOverlay::render(int screenWidth, int screenHeight, const Subdivisio
     // Draw object name
     m_textShader->setVec4("bgColor", glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
     m_textShader->setVec4("textColor", glm::vec4(0.5f, 0.8f, 1.0f, 1.0f));
-    std::string title = "Subdividing: " + objectName;
+    std::string title = taskType + ": " + objectName;
     if (title.length() * charW > overlayWidth - 2 * padding) {
         title = title.substr(0, static_cast<size_t>((overlayWidth - 2 * padding) / charW) - 3) + "...";
     }
@@ -399,7 +421,7 @@ void ProgressOverlay::render(int screenWidth, int screenHeight, const Subdivisio
 
     // Draw phase name
     m_textShader->setVec4("textColor", glm::vec4(0.7f, 0.7f, 0.75f, 1.0f));
-    renderText(phaseName, overlayX + padding, overlayY + padding + charH + 4.0f, scale);
+    renderText(phaseName.c_str(), overlayX + padding, overlayY + padding + charH + 4.0f, scale);
 
     // Draw progress bar
     float barY = overlayY + padding * 2 + charH * 2;

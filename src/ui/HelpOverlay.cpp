@@ -324,7 +324,7 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
     // Help content with toggle indicators
     struct HelpLine {
         std::string text;
-        int toggleType;  // 0=none, 1=wireframe, 2=backface, 3=frustum
+        int toggleType;  // 0=none, 1=wireframe, 2=backface, 3=frustum, 4=lod, 5=lodDebug
     };
 
     const std::vector<HelpLine> helpLines = {
@@ -333,6 +333,8 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
         {"W      Wireframe", 1},
         {"C      Back-face culling", 2},
         {"G      Frustum culling", 3},
+        {"L      LOD system", 4},
+        {"K      LOD debug colors", 5},
         {"F      Focus", 0},
         {"S      Subdivide (smooth)", 0},
         {"D      Subdivide (midpoint)", 0},
@@ -405,6 +407,8 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
             if (line.toggleType == 1) isActive = toggles.wireframe;
             else if (line.toggleType == 2) isActive = toggles.backfaceCulling;
             else if (line.toggleType == 3) isActive = toggles.frustumCulling;
+            else if (line.toggleType == 4) isActive = toggles.lodEnabled;
+            else if (line.toggleType == 5) isActive = toggles.lodDebugColors;
 
             // Set color based on state
             if (line.text.find("===") != std::string::npos) {
