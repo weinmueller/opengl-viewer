@@ -25,12 +25,6 @@ void SceneObject::setMeshData(const MeshData& data) {
 
     m_localBounds = BoundingBox(m_mesh->getMinBounds(), m_mesh->getMaxBounds());
     updateWorldBounds();
-
-    // Print mesh statistics
-    size_t numVertices = m_meshData.vertices.size();
-    size_t numTriangles = m_meshData.indices.size() / 3;
-    std::cout << "[" << m_name << "] Loaded - Vertices: " << numVertices
-              << ", Triangles: " << numTriangles << std::endl;
 }
 
 void SceneObject::subdivide(bool smooth, float creaseAngle) {
@@ -51,12 +45,6 @@ void SceneObject::subdivide(bool smooth, float creaseAngle) {
 
     m_localBounds = BoundingBox(m_mesh->getMinBounds(), m_mesh->getMaxBounds());
     updateWorldBounds();
-
-    // Print mesh statistics
-    size_t numVertices = m_meshData.vertices.size();
-    size_t numTriangles = m_meshData.indices.size() / 3;
-    std::cout << "[" << m_name << "] Vertices: " << numVertices
-              << ", Triangles: " << numTriangles << std::endl;
 }
 
 void SceneObject::applySubdividedMesh(MeshData&& data) {

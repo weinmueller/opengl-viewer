@@ -144,15 +144,12 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
                 break;
             case GLFW_KEY_G:
                 m_renderer->toggleFrustumCulling();
-                std::cout << "Frustum culling: " << (m_renderer->isFrustumCulling() ? "ON" : "OFF") << std::endl;
                 break;
             case GLFW_KEY_L:
                 m_renderer->toggleLOD();
-                std::cout << "LOD: " << (m_renderer->isLODEnabled() ? "ON" : "OFF") << std::endl;
                 break;
             case GLFW_KEY_K:
                 m_renderer->toggleLODDebugColors();
-                std::cout << "LOD debug colors: " << (m_renderer->isLODDebugColors() ? "ON" : "OFF") << std::endl;
                 break;
         }
     }

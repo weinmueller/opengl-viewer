@@ -1,6 +1,8 @@
 #include "HelpOverlay.h"
 #include <glm/glm.hpp>
 #include <cstring>
+#include <sstream>
+#include <iomanip>
 
 // Simple 8x8 bitmap font data (printable ASCII 32-126)
 // Each character is 8 bytes, one per row, bits are pixels left-to-right
@@ -422,6 +424,101 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
         }
         textY += lineHeight;
     }
+
+    // Restore state
+    glBindVertexArray(0);
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+}
+
+void HelpOverlay::renderStats(int screenWidth, int screenHeight, const ToggleStates& toggles) {
+    m_screenWidth = screenWidth;
+    m_screenHeight = screenHeight;
+
+    // Format triangle count with K suffix for thousands
+    auto formatTriangles = [](uint32_t count) -> std::string {
+        if (count >= 1000000) {
+            std::ostringstream ss;
+            ss << std::fixed << std::setprecision(1) << (count / 1000000.0f) << "M";
+            return ss.str();
+        } else if (count >= 1000) {
+            std::ostringstream ss;
+            ss << std::fixed << std::setprecision(1) << (count / 1000.0f) << "K";
+            return ss.str();
+        }
+        return std::to_string(count);
+    };
+
+    // Build stats strings
+    std::string triRendered = "Tris: " + formatTriangles(toggles.renderedTriangles);
+    std::string triOriginal = "Full: " + formatTriangles(toggles.originalTriangles);
+    std::ostringstream savingsStream;
+    savingsStream << "LOD:  " << std::fixed << std::setprecision(0) << toggles.lodSavingsPercent << "%";
+    std::string triSavings = savingsStream.str();
+
+    const float scale = 1.5f;
+    const float charW = FONT_CHAR_WIDTH * scale;
+    const float charH = FONT_CHAR_HEIGHT * scale;
+    const float lineHeight = charH + 2.0f;
+    const float padding = 8.0f;
+
+    // Calculate overlay dimensions
+    size_t maxLen = std::max({triRendered.length(), triOriginal.length(), triSavings.length()});
+    float overlayWidth = maxLen * charW + padding * 2;
+    float overlayHeight = 3 * lineHeight + padding * 2;
+
+    // Position at top-right corner with margin
+    float overlayX = screenWidth - overlayWidth - 10.0f;
+    float overlayY = 10.0f;
+
+    // Setup rendering state
+    glViewport(0, 0, screenWidth, screenHeight);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    m_textShader->use();
+    m_textShader->setVec2("screenSize", glm::vec2(screenWidth, screenHeight));
+    glBindTextureUnit(0, m_fontTexture);
+    m_textShader->setInt("fontTexture", 0);
+    glBindVertexArray(m_vao);
+
+    // Draw background
+    m_textShader->setVec4("textColor", glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+    m_textShader->setVec4("bgColor", glm::vec4(0.1f, 0.1f, 0.15f, 0.85f));
+    renderQuad(overlayX, overlayY, overlayWidth, overlayHeight);
+
+    // Draw border
+    m_textShader->setVec4("bgColor", glm::vec4(0.3f, 0.5f, 0.7f, 1.0f));
+    float borderWidth = 1.0f;
+    renderQuad(overlayX, overlayY, overlayWidth, borderWidth);
+    renderQuad(overlayX, overlayY + overlayHeight - borderWidth, overlayWidth, borderWidth);
+    renderQuad(overlayX, overlayY, borderWidth, overlayHeight);
+    renderQuad(overlayX + overlayWidth - borderWidth, overlayY, borderWidth, overlayHeight);
+
+    // Colors
+    const glm::vec4 statsColor(1.0f, 0.9f, 0.5f, 1.0f);     // Yellow for current
+    const glm::vec4 normalColor(0.7f, 0.7f, 0.75f, 1.0f);   // Gray for original
+    const glm::vec4 savingsColor(0.4f, 1.0f, 0.8f, 1.0f);   // Cyan for savings
+
+    m_textShader->setVec4("bgColor", glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+
+    float textY = overlayY + padding;
+
+    // Rendered triangles
+    m_textShader->setVec4("textColor", statsColor);
+    renderText(triRendered, overlayX + padding, textY, scale);
+    textY += lineHeight;
+
+    // Original triangles
+    m_textShader->setVec4("textColor", normalColor);
+    renderText(triOriginal, overlayX + padding, textY, scale);
+    textY += lineHeight;
+
+    // LOD savings
+    m_textShader->setVec4("textColor", savingsColor);
+    renderText(triSavings, overlayX + padding, textY, scale);
 
     // Restore state
     glBindVertexArray(0);

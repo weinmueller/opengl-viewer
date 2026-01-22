@@ -92,10 +92,6 @@ bool ObjLoader::load(const std::string& path, MeshData& outData) {
 
     outData.calculateBounds();
 
-    std::cout << "Loaded mesh: " << path << std::endl;
-    std::cout << "  Vertices: " << outData.vertices.size() << std::endl;
-    std::cout << "  Triangles: " << outData.indices.size() / 3 << std::endl;
-
     return true;
 }
 

@@ -69,6 +69,14 @@ public:
     bool isLODDebugColors() const { return m_lodDebugColors; }
     void toggleLODDebugColors() { m_lodDebugColors = !m_lodDebugColors; }
 
+    // Triangle stats for LOD display
+    uint32_t getRenderedTriangles() const { return m_renderedTriangles; }
+    uint32_t getOriginalTriangles() const { return m_originalTriangles; }
+    float getLODSavingsPercent() const {
+        if (m_originalTriangles == 0) return 0.0f;
+        return 100.0f * (1.0f - static_cast<float>(m_renderedTriangles) / static_cast<float>(m_originalTriangles));
+    }
+
     Light& getLight() { return m_light; }
     const Light& getLight() const { return m_light; }
 
@@ -128,4 +136,8 @@ private:
 
     bool m_lodEnabled{true};
     bool m_lodDebugColors{false};
+
+    // Triangle count stats
+    uint32_t m_renderedTriangles{0};
+    uint32_t m_originalTriangles{0};
 };

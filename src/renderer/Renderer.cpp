@@ -139,6 +139,8 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
 
     m_visibleObjects = 0;
     m_culledObjects = 0;
+    m_renderedTriangles = 0;
+    m_originalTriangles = 0;
 
     // LOD debug colors (Green -> Yellow -> Orange -> Red for LOD 0-5)
     static const glm::vec3 lodDebugColors[] = {
@@ -184,6 +186,18 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
 
         ++m_visibleObjects;
 
+        // Track triangle counts for stats
+        m_renderedTriangles += meshToRender->getIndexCount() / 3;
+        if (obj->hasLOD()) {
+            // Get original triangle count from LOD level 0
+            const auto* lod0 = obj->getLODMesh().getLevel(0);
+            if (lod0) {
+                m_originalTriangles += lod0->triangleCount;
+            }
+        } else if (obj->getMesh()) {
+            m_originalTriangles += obj->getMesh()->getIndexCount() / 3;
+        }
+
         m_meshShader->setMat4("model", obj->getModelMatrix());
 
         // Determine color
@@ -214,13 +228,19 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
         }
     }
 
-    // Render help overlay on top
+    // Render stats overlay (always visible, top-right)
     ToggleStates toggles;
     toggles.wireframe = m_wireframe;
     toggles.backfaceCulling = m_backfaceCulling;
     toggles.frustumCulling = m_frustumCulling;
     toggles.lodEnabled = m_lodEnabled;
     toggles.lodDebugColors = m_lodDebugColors;
+    toggles.renderedTriangles = m_renderedTriangles;
+    toggles.originalTriangles = m_originalTriangles;
+    toggles.lodSavingsPercent = getLODSavingsPercent();
+    m_helpOverlay.renderStats(m_pickingWidth, m_pickingHeight, toggles);
+
+    // Render help overlay on top (toggled with H key)
     m_helpOverlay.render(m_pickingWidth, m_pickingHeight, toggles);
 
     // Render progress overlay if subdivision or LOD generation is active

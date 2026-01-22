@@ -49,12 +49,10 @@ int SubdivisionManager::processCompletedTasks() {
     int count = 0;
     for (auto& task : tasksToProcess) {
         if (task->progress.isCancelled()) {
-            std::cout << "[" << task->objectName << "] Subdivision cancelled" << std::endl;
             continue;
         }
 
         if (task->progress.hasError.load(std::memory_order_relaxed)) {
-            std::cout << "[" << task->objectName << "] Subdivision failed" << std::endl;
             continue;
         }
 
@@ -62,14 +60,6 @@ int SubdivisionManager::processCompletedTasks() {
         if (task->targetObject) {
             task->targetObject->applySubdividedMesh(std::move(task->resultData));
             ++count;
-
-            // Print stats
-            size_t numVertices = task->targetObject->getMesh() ?
-                task->targetObject->getMesh()->getVertexCount() : 0;
-            size_t numTriangles = task->targetObject->getMesh() ?
-                task->targetObject->getMesh()->getIndexCount() / 3 : 0;
-            std::cout << "[" << task->objectName << "] Vertices: " << numVertices
-                      << ", Triangles: " << numTriangles << std::endl;
         }
     }
 
@@ -92,8 +82,6 @@ void SubdivisionManager::cancelAll() {
             m_pendingTasks.pop();
         }
     }
-
-    std::cout << "Subdivision cancelled" << std::endl;
 }
 
 bool SubdivisionManager::isBusy() const {

@@ -51,12 +51,10 @@ int LODManager::processCompletedTasks() {
     int count = 0;
     for (auto& task : tasksToProcess) {
         if (task->progress.isCancelled()) {
-            std::cout << "[" << task->objectName << "] LOD generation cancelled" << std::endl;
             continue;
         }
 
         if (task->progress.hasError.load(std::memory_order_relaxed)) {
-            std::cout << "[" << task->objectName << "] LOD generation failed" << std::endl;
             continue;
         }
 
@@ -64,9 +62,6 @@ int LODManager::processCompletedTasks() {
         if (task->targetObject && !task->resultLevels.empty()) {
             task->targetObject->applyLODLevels(std::move(task->resultLevels));
             ++count;
-
-            std::cout << "[" << task->objectName << "] LOD levels generated: "
-                      << task->targetObject->getLODMesh().getLevelCount() << std::endl;
         }
     }
 
@@ -90,8 +85,6 @@ void LODManager::cancelAll() {
             m_pendingTasks.pop();
         }
     }
-
-    std::cout << "LOD generation cancelled" << std::endl;
 }
 
 bool LODManager::isBusy() const {
