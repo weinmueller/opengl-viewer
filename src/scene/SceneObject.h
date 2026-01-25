@@ -15,7 +15,7 @@ class SceneObject {
 public:
     SceneObject(const std::string& name = "Object");
 
-    void setMesh(std::shared_ptr<Mesh> mesh);
+    void setMesh(std::unique_ptr<Mesh> mesh);
     void setMeshData(const MeshData& data);
     void setPosition(const glm::vec3& position);
     void setRotation(const glm::vec3& eulerAngles);
@@ -76,7 +76,7 @@ private:
     void updateWorldBounds();
 
     std::string m_name;
-    std::shared_ptr<Mesh> m_mesh;
+    std::unique_ptr<Mesh> m_mesh;
     MeshData m_meshData;
     LODMesh m_lodMesh;
 

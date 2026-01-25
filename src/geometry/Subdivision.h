@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mesh/MeshData.h"
-#include "SubdivisionTask.h"
+#include "async/SubdivisionTask.h"
 #include <unordered_map>
 #include <vector>
 #include <tuple>

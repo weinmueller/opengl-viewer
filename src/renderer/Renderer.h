@@ -5,6 +5,7 @@
 #include "scene/Scene.h"
 #include "scene/Frustum.h"
 #include "scene/BoundingBox.h"
+#include "util/TextRenderer.h"
 #include "ui/HelpOverlay.h"
 #include "ui/ProgressOverlay.h"
 #include <glm/glm.hpp>
@@ -105,6 +106,7 @@ private:
     std::unique_ptr<Shader> m_meshShader;
     std::unique_ptr<Shader> m_pickingShader;
     std::unique_ptr<Shader> m_backgroundShader;
+    TextRenderer m_textRenderer;
 
     // Background quad VAO/VBO
     GLuint m_backgroundVAO{0};

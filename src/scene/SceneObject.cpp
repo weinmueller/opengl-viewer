@@ -8,8 +8,8 @@ SceneObject::SceneObject(const std::string& name)
     updateModelMatrix();
 }
 
-void SceneObject::setMesh(std::shared_ptr<Mesh> mesh) {
-    m_mesh = mesh;
+void SceneObject::setMesh(std::unique_ptr<Mesh> mesh) {
+    m_mesh = std::move(mesh);
     if (m_mesh) {
         m_localBounds = BoundingBox(m_mesh->getMinBounds(), m_mesh->getMaxBounds());
         updateWorldBounds();
@@ -20,7 +20,7 @@ void SceneObject::setMeshData(const MeshData& data) {
     m_meshData = data;
 
     // Also upload to GPU
-    m_mesh = std::make_shared<Mesh>();
+    m_mesh = std::make_unique<Mesh>();
     m_mesh->upload(m_meshData);
 
     m_localBounds = BoundingBox(m_mesh->getMinBounds(), m_mesh->getMaxBounds());
@@ -40,7 +40,7 @@ void SceneObject::subdivide(bool smooth, float creaseAngle) {
     }
 
     // Re-upload to GPU
-    m_mesh = std::make_shared<Mesh>();
+    m_mesh = std::make_unique<Mesh>();
     m_mesh->upload(m_meshData);
 
     m_localBounds = BoundingBox(m_mesh->getMinBounds(), m_mesh->getMaxBounds());
@@ -52,7 +52,7 @@ void SceneObject::applySubdividedMesh(MeshData&& data) {
 
     // Use async upload for double-buffering (GPU upload on main thread)
     if (!m_mesh) {
-        m_mesh = std::make_shared<Mesh>();
+        m_mesh = std::make_unique<Mesh>();
     }
     m_mesh->uploadAsync(m_meshData);
 

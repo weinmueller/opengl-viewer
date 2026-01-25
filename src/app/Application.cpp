@@ -1,7 +1,8 @@
 #include "Application.h"
 #include "mesh/MeshLoader.h"
 #include "mesh/MeshData.h"
-#include "lod/LODTask.h"
+#include "async/LODTask.h"
+#include "async/SubdivisionTask.h"
 #include <iostream>
 #include <GLFW/glfw3.h>
 

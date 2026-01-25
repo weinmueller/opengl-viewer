@@ -5,42 +5,54 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 
 ## Architecture
 
-### Core Components
+### Application Layer (`src/app/`)
+- **Application** (`src/app/Application.h`) - Main application loop and input handling
+- **main.cpp** (`src/app/main.cpp`) - Entry point and command-line parsing
+
+### Core Components (`src/core/`)
 - **Window** (`src/core/Window.h`) - GLFW wrapper with input callbacks
 - **Shader** (`src/core/Shader.h`) - Shader compilation and uniform management
 - **Timer** (`src/core/Timer.h`) - Frame timing and FPS calculation
 
-### Rendering
+### Utilities (`src/util/`)
+- **Result** (`src/util/Result.h`) - Generic error handling type (`Result<T, E>`)
+- **TextRenderer** (`src/util/TextRenderer.h`) - Shared bitmap font rendering for UI overlays
+
+### Async Task System (`src/async/`)
+- **TaskManager** (`src/async/TaskManager.h`) - Template base class for background task processing
+- **Progress** (`src/async/Progress.h`) - Unified atomic progress tracking struct
+- **SubdivisionTask** (`src/async/SubdivisionTask.h`) - Subdivision task data and progress
+- **LODTask** (`src/async/LODTask.h`) - LOD generation task data and progress
+
+### Rendering (`src/renderer/`)
 - **Renderer** (`src/renderer/Renderer.h`) - Main render loop with Blinn-Phong lighting
 - **Camera** (`src/renderer/Camera.h`) - Orbit camera with pan/zoom
 
-### Scene Management
+### Scene Management (`src/scene/`)
 - **Scene** (`src/scene/Scene.h`) - Collection of scene objects
 - **SceneObject** (`src/scene/SceneObject.h`) - Renderable object with transform
 - **BoundingBox** (`src/scene/BoundingBox.h`) - AABB for culling/picking
 
-### Mesh System
+### Mesh System (`src/mesh/`)
 - **Mesh** (`src/mesh/Mesh.h`) - GPU resources (VAO/VBO/EBO) using DSA
 - **MeshData** (`src/mesh/MeshData.h`) - CPU-side vertex/index data
 - **MeshLoader** (`src/mesh/MeshLoader.h`) - Abstract loader interface
 - **ObjLoader** (`src/mesh/ObjLoader.h`) - OBJ file support via tinyobjloader
 
-### Geometry Processing
+### Geometry Processing (`src/geometry/`)
 - **Subdivision** (`src/geometry/Subdivision.h`) - Loop and midpoint subdivision algorithms
-- **SubdivisionManager** (`src/geometry/SubdivisionManager.h`) - Background thread management for subdivision
-- **SubdivisionTask** (`src/geometry/SubdivisionTask.h`) - Task and progress tracking structures
+- **SubdivisionManager** (`src/geometry/SubdivisionManager.h`) - Inherits TaskManager for background subdivision
 
-### Level of Detail (LOD)
+### Level of Detail (`src/lod/`)
 - **LODLevel** (`src/lod/LODLevel.h`) - Single LOD level with mesh data and threshold
 - **LODMesh** (`src/lod/LODMesh.h`) - Container managing multiple LOD levels per object
-- **LODSelector** (`src/lod/LODSelector.h`) - Screen-space size calculation for LOD selection
+- **LODSelector** (`src/lod/LODSelector.h`) - Namespace with screen-space LOD selection functions
 - **MeshSimplifier** (`src/lod/MeshSimplifier.h`) - QEM-based mesh decimation algorithm
-- **LODManager** (`src/lod/LODManager.h`) - Background thread manager for LOD generation
-- **LODTask** (`src/lod/LODTask.h`) - Task and progress tracking for LOD generation
+- **LODManager** (`src/lod/LODManager.h`) - Inherits TaskManager for background LOD generation
 
-### User Interface
-- **HelpOverlay** (`src/ui/HelpOverlay.h`) - In-window help with bitmap font text rendering
-- **ProgressOverlay** (`src/ui/ProgressOverlay.h`) - Subdivision and LOD generation progress bar display
+### User Interface (`src/ui/`)
+- **HelpOverlay** (`src/ui/HelpOverlay.h`) - In-window help display (uses TextRenderer)
+- **ProgressOverlay** (`src/ui/ProgressOverlay.h`) - Progress bar display (uses TextRenderer)
 
 ## Technology Stack
 - C++17
@@ -120,10 +132,41 @@ cd build && cmake .. && make
 ## Code Conventions
 - Use modern C++ (smart pointers, RAII)
 - OpenGL 4.6 DSA functions (glCreate*, glNamed*)
-- Header-only for simple structs (MeshData, BoundingBox, Timer)
+- Header-only for simple structs (MeshData, BoundingBox, Timer, Progress)
 - Separate .h/.cpp for classes with implementation
+- Template classes for shared patterns (TaskManager)
+- Namespaces for stateless utility functions (LODSelector)
 
 ## Key Files for Modifications
 - Add new loaders: Inherit from `MeshLoader`, register in `MeshLoader::createForFile()`
 - Add rendering features: Modify `Renderer::render()` and shaders
 - Add input handling: Use callbacks in `Application::setupCallbacks()`
+- Add background tasks: Inherit from `TaskManager<YourTaskType>` in `src/async/`
+- Add UI overlays: Use `TextRenderer` for text/quad rendering
+
+## Design Patterns
+
+### TaskManager Template
+Background task managers inherit from `TaskManager<TaskType>`:
+```cpp
+class SubdivisionManager : public TaskManager<SubdivisionTask> {
+protected:
+    void processTask(SubdivisionTask& task) override;
+    bool applyTaskResult(SubdivisionTask& task) override;
+};
+```
+
+### Progress Tracking
+All background tasks use unified `Progress` struct with atomic members:
+- `phase`, `phaseProgress`, `totalProgress` - track completion
+- `cancelled`, `completed`, `hasError` - status flags
+- `phaseNames` - configurable phase descriptions
+
+### Result Type
+Use `Result<T>` for operations that can fail:
+```cpp
+Result<MeshData> load() {
+    if (error) return Result<MeshData>::error("Failed");
+    return Result<MeshData>::ok(data);
+}
+```

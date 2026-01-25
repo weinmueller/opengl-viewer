@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "lod/LODSelector.h"
 #include "lod/LODManager.h"
+#include <iostream>
 
 Renderer::Renderer() {
 }
@@ -43,8 +44,11 @@ void Renderer::init(int width, int height) {
     glVertexArrayAttribBinding(m_backgroundVAO, 0, 0);
 
     initPickingFBO(width, height);
-    m_helpOverlay.init();
-    m_progressOverlay.init();
+
+    // Initialize text renderer and pass to overlays
+    m_textRenderer.init();
+    m_helpOverlay.setTextRenderer(&m_textRenderer);
+    m_progressOverlay.setTextRenderer(&m_textRenderer);
 }
 
 void Renderer::initPickingFBO(int width, int height) {
@@ -73,7 +77,7 @@ void Renderer::initPickingFBO(int width, int height) {
     // Check framebuffer status
     GLenum status = glCheckNamedFramebufferStatus(m_pickingFBO, GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
-        // Handle error
+        std::cerr << "Framebuffer incomplete: 0x" << std::hex << status << std::dec << std::endl;
     }
 }
 

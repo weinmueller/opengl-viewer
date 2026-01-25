@@ -107,27 +107,30 @@ Mesh statistics (vertices, triangles) are printed to the terminal after loading 
 ```
 OpenGL/
 ├── src/
-│   ├── main.cpp              # Entry point
-│   ├── Application.h/cpp     # Main application
+│   ├── app/                  # Application layer
+│   │   ├── main.cpp          # Entry point
+│   │   └── Application.h/cpp # Main application
 │   ├── core/                 # Window, Shader, Timer
+│   ├── util/                 # Utilities (Result, TextRenderer)
+│   ├── async/                # Background task system
+│   │   ├── TaskManager.h     # Template base for background tasks
+│   │   ├── Progress.h        # Unified progress tracking
+│   │   ├── SubdivisionTask.h # Subdivision task data
+│   │   └── LODTask.h         # LOD generation task data
 │   ├── renderer/             # Camera, Renderer
 │   ├── scene/                # Scene graph, Objects
 │   ├── mesh/                 # Mesh loading and GPU resources
-│   ├── geometry/             # Subdivision algorithms and background threading
-│   ├── lod/                  # Level of Detail system (LODMesh, MeshSimplifier, LODManager)
-│   └── ui/                   # User interface (HelpOverlay, ProgressOverlay)
+│   ├── geometry/             # Subdivision algorithms
+│   ├── lod/                  # Level of Detail system
+│   └── ui/                   # User interface overlays
 ├── shaders/
-│   ├── mesh.vert             # Main vertex shader
-│   ├── mesh.frag             # Main fragment shader (Blinn-Phong)
-│   ├── picking.vert          # Object picking vertex shader
-│   ├── picking.frag          # Object picking fragment shader
-│   ├── text.vert             # Text rendering vertex shader
-│   ├── text.frag             # Text rendering fragment shader
-│   ├── background.vert       # Background gradient vertex shader
-│   └── background.frag       # Background gradient fragment shader
+│   ├── mesh.vert/frag        # Main mesh rendering
+│   ├── picking.vert/frag     # Object picking
+│   ├── text.vert/frag        # Text rendering
+│   └── background.vert/frag  # Gradient background
 ├── assets/
 │   └── meshes/               # Sample mesh files
-└── external/                 # Third-party libraries
+└── external/                 # Third-party libraries (GLAD, GLM, tinyobjloader)
 ```
 
 ## Roadmap
@@ -144,6 +147,7 @@ OpenGL/
 - [x] Object-level frustum culling (G key)
 - [x] Background tessellation with progress indicators
 - [x] LOD (Level of Detail) system with QEM mesh simplification
+- [x] Code refactoring (TaskManager template, shared TextRenderer, unified Progress)
 - [ ] GPU-based subdivision (compute shaders)
 - [ ] Material and texture support
 

@@ -1,10 +1,8 @@
 #pragma once
 
-#include "core/Shader.h"
-#include <glad/gl.h>
+#include "util/TextRenderer.h"
 #include <string>
 #include <vector>
-#include <memory>
 
 // Toggle states for help overlay display
 struct ToggleStates {
@@ -21,10 +19,10 @@ struct ToggleStates {
 
 class HelpOverlay {
 public:
-    HelpOverlay();
-    ~HelpOverlay();
+    HelpOverlay() = default;
+    ~HelpOverlay() = default;
 
-    void init();
+    void setTextRenderer(TextRenderer* renderer) { m_textRenderer = renderer; }
     void render(int screenWidth, int screenHeight, const ToggleStates& toggles);
     void renderStats(int screenWidth, int screenHeight, const ToggleStates& toggles);
 
@@ -33,23 +31,6 @@ public:
     void toggle() { m_visible = !m_visible; }
 
 private:
-    void createFontTexture();
-    void renderText(const std::string& text, float x, float y, float scale);
-    void renderQuad(float x, float y, float width, float height);
-
-    std::unique_ptr<Shader> m_textShader;
-    GLuint m_fontTexture{0};
-    GLuint m_vao{0};
-    GLuint m_vbo{0};
-
+    TextRenderer* m_textRenderer{nullptr};
     bool m_visible{false};
-    int m_screenWidth{0};
-    int m_screenHeight{0};
-
-    static constexpr int FONT_CHAR_WIDTH = 8;
-    static constexpr int FONT_CHAR_HEIGHT = 8;
-    static constexpr int FONT_FIRST_CHAR = 32;  // Space
-    static constexpr int FONT_CHAR_COUNT = 95;  // Printable ASCII
-    static constexpr int FONT_COLS = 16;
-    static constexpr int FONT_ROWS = 6;
 };
