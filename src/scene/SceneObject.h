@@ -23,7 +23,7 @@ public:
     void setColor(const glm::vec3& color) { m_color = color; }
 
     // Subdivision
-    void subdivide(bool smooth = true, float creaseAngle = 30.0f);
+    void subdivide(bool smooth = true, float creaseAngle = 180.0f);
     bool canSubdivide() const { return !m_meshData.empty(); }
 
     // Apply pre-computed subdivision result (for background threading)

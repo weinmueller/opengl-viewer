@@ -74,6 +74,8 @@ MeshData Subdivision::midpointSubdivide(const MeshData& input) {
         output.indices.push_back(m20);
     }
 
+    // Recalculate normals from actual geometry for correct lighting
+    output.recalculateNormals();
     output.calculateBounds();
     return output;
 }
@@ -405,6 +407,8 @@ MeshData Subdivision::loopSubdivide(const MeshData& input, float creaseAngleThre
         output.indices[outIdx + 11] = m20;
     }
 
+    // Recalculate normals from actual geometry for correct lighting
+    output.recalculateNormals();
     output.calculateBounds();
     return output;
 }
@@ -527,6 +531,8 @@ MeshData Subdivision::midpointSubdivideWithProgress(const MeshData& input,
     progress.phase.store(8, std::memory_order_relaxed);
     progress.totalProgress.store(0.98f, std::memory_order_relaxed);
 
+    // Recalculate normals from actual geometry for correct lighting
+    output.recalculateNormals();
     output.calculateBounds();
 
     progress.totalProgress.store(1.0f, std::memory_order_relaxed);
@@ -876,6 +882,8 @@ MeshData Subdivision::loopSubdivideWithProgress(const MeshData& input, float cre
     }
     progress.updatePhaseProgress(1.0f);
 
+    // Recalculate normals from actual geometry for correct lighting
+    output.recalculateNormals();
     output.calculateBounds();
     return output;
 }

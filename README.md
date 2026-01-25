@@ -9,7 +9,7 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **Modern OpenGL 4.6** - Uses Direct State Access (DSA) for efficient GPU resource management
 - **OBJ Mesh Loading** - Load multiple OBJ files simultaneously with automatic normal handling
 - **Object Picking** - Click to select objects with visual highlight feedback
-- **Mesh Subdivision** - Loop subdivision (smooth) and midpoint subdivision with crease/boundary preservation. Only subdivides visible objects when none selected.
+- **Mesh Subdivision** - Loop subdivision (smooth) and midpoint subdivision. Refines all edges by default; use `--angle` for crease preservation. Only subdivides visible objects when none selected.
 - **Parallel Processing** - OpenMP-accelerated subdivision for large meshes (4-5x speedup)
 - **Background Tessellation** - Non-blocking subdivision with real-time progress indicators. UI stays responsive during computation.
 - **GPU Double-Buffering** - Fence-synchronized buffer swapping for smooth geometry updates
@@ -23,7 +23,7 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **Progress Overlay** - Shows subdivision/LOD progress with phase name, percentage, and queued task count
 - **Frustum Culling** - Skip rendering objects outside camera view (G key)
 - **LOD System** - Automatic Level of Detail with QEM-based mesh simplification
-- **6 LOD Levels** - 100% → 50% → 30% → 15% → 7% → 3% triangle reduction
+- **6 LOD Levels** - 100% → 70% → 50% → 35% → 25% → 15% triangle reduction (gentler for smooth meshes)
 - **Screen-Space LOD Selection** - Automatic detail adjustment based on object screen size
 - **LOD Debug Colors** - Visualize LOD levels with color coding (K key)
 
@@ -66,8 +66,8 @@ make
 # Run with included samples
 ./MeshViewer ../assets/meshes/sphere.obj ../assets/meshes/torus.obj
 
-# Set crease angle threshold for subdivision (default: 30 degrees)
-./MeshViewer --angle 45 mesh.obj
+# Set crease angle threshold to preserve sharp edges (default: 180 = smooth all)
+./MeshViewer --angle 30 mesh.obj
 
 # Show help
 ./MeshViewer --help
@@ -77,7 +77,7 @@ make
 
 | Option | Description |
 |--------|-------------|
-| `--angle <degrees>` | Crease angle threshold for subdivision (default: 30). Edges with dihedral angle greater than this are kept sharp. |
+| `--angle <degrees>` | Crease angle threshold for subdivision (default: 180). Edges with dihedral angle greater than this are kept sharp. Use lower values (e.g., 30) to preserve sharp edges on cubes, etc. |
 | `--help` | Show help message |
 
 ### Controls

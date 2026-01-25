@@ -103,7 +103,7 @@ struct SubdivisionTask {
 
     // Subdivision parameters
     bool smooth{true};          // true = Loop, false = midpoint
-    float creaseAngle{30.0f};   // Only used for Loop subdivision
+    float creaseAngle{180.0f};   // Only used for Loop subdivision
 
     SubdivisionTask() = default;
 

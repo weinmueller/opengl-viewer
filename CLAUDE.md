@@ -56,8 +56,8 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 cd build && cmake .. && make
 ./MeshViewer assets/meshes/cube.obj
 
-# With custom crease angle threshold
-./MeshViewer --angle 45 assets/meshes/cube.obj
+# With crease angle to preserve sharp edges (default is 180 = smooth all)
+./MeshViewer --angle 30 assets/meshes/cube.obj
 ```
 
 ## Current Features
@@ -65,11 +65,12 @@ cd build && cmake .. && make
 - Object picking with right-click selection
 - Selection highlighting (orange tint)
 - Mesh subdivision (S = Loop smooth, D = midpoint) - only visible objects when none selected
-- Crease-preserving subdivision (sharp edges detected via dihedral angle threshold)
+- Smooth subdivision by default (refines all edges); use `--angle` for crease preservation
 - **Parallel Loop subdivision** using OpenMP (4-5x speedup on multi-core CPUs)
 - **Background tessellation** with progress indicators (non-blocking UI during subdivision)
 - **GPU double-buffering** with fence synchronization for smooth geometry updates
-- Configurable crease angle via `--angle` command line option (default: 30 degrees)
+- Configurable crease angle via `--angle` command line option (default: 180°, use lower values like 30° to preserve sharp edges)
+- Automatic normal recalculation after subdivision for correct lighting
 - Automatic vertex welding for meshes with split vertices (per-face normals)
 - Mesh statistics printed to terminal
 - Orbit camera (left mouse or arrow keys), pan (middle mouse), zoom (scroll)
@@ -82,7 +83,7 @@ cd build && cmake .. && make
 - In-window help overlay (H key) with toggle state indicators
 - Frustum culling toggle (G key)
 - **LOD (Level of Detail) system** with automatic generation on mesh load
-- QEM-based mesh simplification (6 LOD levels: 100%, 50%, 30%, 15%, 7%, 3%)
+- QEM-based mesh simplification (6 LOD levels: 100%, 70%, 50%, 35%, 25%, 15%)
 - LOD toggle (L key) and debug colors (K key) showing LOD levels
 - Screen-space LOD selection with hysteresis to prevent popping
 - Automatic LOD regeneration after mesh subdivision

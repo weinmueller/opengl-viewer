@@ -40,21 +40,21 @@ public:
         return screenDiameter;
     }
 
-    // Default LOD thresholds (in screen pixels) - lower values = LOD kicks in later
-    static constexpr float LOD0_THRESHOLD = 250.0f;  // Highest detail
-    static constexpr float LOD1_THRESHOLD = 150.0f;
-    static constexpr float LOD2_THRESHOLD = 80.0f;
-    static constexpr float LOD3_THRESHOLD = 40.0f;
-    static constexpr float LOD4_THRESHOLD = 20.0f;
+    // Default LOD thresholds (in screen pixels) - higher values = keep detail longer
+    static constexpr float LOD0_THRESHOLD = 400.0f;  // Highest detail
+    static constexpr float LOD1_THRESHOLD = 200.0f;
+    static constexpr float LOD2_THRESHOLD = 100.0f;
+    static constexpr float LOD3_THRESHOLD = 50.0f;
+    static constexpr float LOD4_THRESHOLD = 25.0f;
     static constexpr float LOD5_THRESHOLD = 0.0f;    // Lowest detail
 
-    // Default triangle ratios for each LOD level - starting from 50%
+    // Default triangle ratios for each LOD level - gentler reduction
     static constexpr float LOD0_RATIO = 1.0f;        // 100%
-    static constexpr float LOD1_RATIO = 0.5f;        // 50%
-    static constexpr float LOD2_RATIO = 0.3f;        // 30%
-    static constexpr float LOD3_RATIO = 0.15f;       // 15%
-    static constexpr float LOD4_RATIO = 0.07f;       // 7%
-    static constexpr float LOD5_RATIO = 0.03f;       // 3%
+    static constexpr float LOD1_RATIO = 0.7f;        // 70%
+    static constexpr float LOD2_RATIO = 0.5f;        // 50%
+    static constexpr float LOD3_RATIO = 0.35f;       // 35%
+    static constexpr float LOD4_RATIO = 0.25f;       // 25%
+    static constexpr float LOD5_RATIO = 0.15f;       // 15%
 
     // Hysteresis buffer to prevent LOD popping (10% of threshold)
     static constexpr float HYSTERESIS = 0.1f;

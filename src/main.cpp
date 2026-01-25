@@ -7,8 +7,9 @@
 void printUsage(const char* progName) {
     std::cout << "Usage: " << progName << " [options] [mesh files...]\n"
               << "\nOptions:\n"
-              << "  --angle <degrees>  Crease angle threshold for subdivision (default: 30)\n"
+              << "  --angle <degrees>  Crease angle threshold for subdivision (default: 180)\n"
               << "                     Edges with dihedral angle > threshold are kept sharp\n"
+              << "                     Use lower values (e.g., 30) to preserve sharp edges\n"
               << "  --help             Show this help message\n"
               << "\nControls:\n"
               << "  Left Mouse Drag    Orbit camera\n"
@@ -25,7 +26,7 @@ void printUsage(const char* progName) {
 
 int main(int argc, char* argv[]) {
     std::vector<std::string> meshPaths;
-    float creaseAngle = 30.0f;
+    float creaseAngle = 180.0f;
 
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--angle") == 0 || std::strcmp(argv[i], "-a") == 0) {

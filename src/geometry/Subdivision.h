@@ -11,8 +11,8 @@ public:
     // Loop subdivision - smooths and subdivides triangle mesh
     // Each triangle becomes 4 triangles
     // creaseAngleThreshold: edges with dihedral angle > threshold (in degrees) are kept sharp
-    // Default 30 degrees preserves sharp features like cube edges
-    static MeshData loopSubdivide(const MeshData& input, float creaseAngleThreshold = 30.0f);
+    // Default 180 degrees refines everything (no crease preservation)
+    static MeshData loopSubdivide(const MeshData& input, float creaseAngleThreshold = 180.0f);
 
     // Simple midpoint subdivision - splits without smoothing
     static MeshData midpointSubdivide(const MeshData& input);
