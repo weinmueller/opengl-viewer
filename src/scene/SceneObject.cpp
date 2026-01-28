@@ -25,6 +25,14 @@ void SceneObject::setMeshData(const MeshData& data) {
 
     m_localBounds = BoundingBox(m_mesh->getMinBounds(), m_mesh->getMaxBounds());
     updateWorldBounds();
+
+    // Load texture if specified
+    if (!m_meshData.texturePath.empty()) {
+        m_texture = std::make_unique<Texture>();
+        if (!m_texture->load(m_meshData.texturePath)) {
+            m_texture.reset();
+        }
+    }
 }
 
 void SceneObject::subdivide(bool smooth, float creaseAngle) {

@@ -15,7 +15,9 @@
 
 class Application {
 public:
-    Application(int width, int height, const std::string& title, float creaseAngle = 180.0f);
+    Application(int width, int height, const std::string& title,
+                float creaseAngle = 180.0f,
+                const std::string& defaultTexture = "assets/textures/default_grid.png");
     ~Application() = default;
 
     int run(const std::vector<std::string>& meshPaths = {});
@@ -53,4 +55,5 @@ private:
     double m_lastMouseY{0.0};
 
     float m_creaseAngle{180.0f};
+    std::string m_defaultTexturePath;
 };

@@ -19,11 +19,16 @@ uniform vec3 viewPos;
 uniform vec3 objectColor;
 uniform float rimStrength;
 uniform vec3 rimColor;
+uniform sampler2D diffuseMap;
+uniform bool hasTexture;
 
 void main() {
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(-light.direction);
     vec3 viewDir = normalize(viewPos - FragPos);
+
+    // Get base color from texture or object color
+    vec3 baseColor = hasTexture ? texture(diffuseMap, TexCoord).rgb : objectColor;
 
     // Ambient
     vec3 ambient = light.ambient * light.color;
@@ -42,6 +47,6 @@ void main() {
     rim = smoothstep(0.4, 1.0, rim);  // Sharpen the rim
     vec3 rimLight = rimStrength * rim * rimColor;
 
-    vec3 result = (ambient + diffuse + specular) * objectColor + rimLight;
+    vec3 result = (ambient + diffuse + specular) * baseColor + rimLight;
     FragColor = vec4(result, 1.0);
 }

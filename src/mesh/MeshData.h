@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <string>
 
 struct Vertex {
     glm::vec3 position;
@@ -12,6 +13,7 @@ struct Vertex {
 struct MeshData {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
+    std::string texturePath;
 
     glm::vec3 minBounds{std::numeric_limits<float>::max()};
     glm::vec3 maxBounds{std::numeric_limits<float>::lowest()};
@@ -37,6 +39,7 @@ struct MeshData {
     void clear() {
         vertices.clear();
         indices.clear();
+        texturePath.clear();
         minBounds = glm::vec3(std::numeric_limits<float>::max());
         maxBounds = glm::vec3(std::numeric_limits<float>::lowest());
     }

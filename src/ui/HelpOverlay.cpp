@@ -9,13 +9,14 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
     // Help content with toggle indicators
     struct HelpLine {
         std::string text;
-        int toggleType;  // 0=none, 1=wireframe, 2=backface, 3=frustum, 4=lod, 5=lodDebug
+        int toggleType;  // 0=none, 1=wireframe, 2=backface, 3=frustum, 4=lod, 5=lodDebug, 6=textures
     };
 
     const std::vector<HelpLine> helpLines = {
         {"=== KEYBOARD ===", 0},
         {"H      Help toggle", 0},
         {"W      Wireframe", 1},
+        {"T      Textures", 6},
         {"C      Back-face culling", 2},
         {"G      Frustum culling", 3},
         {"L      LOD system", 4},
@@ -80,6 +81,7 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
             else if (line.toggleType == 3) isActive = toggles.frustumCulling;
             else if (line.toggleType == 4) isActive = toggles.lodEnabled;
             else if (line.toggleType == 5) isActive = toggles.lodDebugColors;
+            else if (line.toggleType == 6) isActive = toggles.texturesEnabled;
 
             // Set color based on state
             glm::vec4 color;

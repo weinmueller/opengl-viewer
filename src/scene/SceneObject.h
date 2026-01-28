@@ -5,6 +5,7 @@
 #include "mesh/MeshData.h"
 #include "lod/LODMesh.h"
 #include "lod/LODLevel.h"
+#include "core/Texture.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
@@ -65,6 +66,10 @@ public:
     bool isSelected() const { return m_selected; }
     void setSelected(bool selected) { m_selected = selected; }
 
+    // Texture support
+    Texture* getTexture() const { return m_texture.get(); }
+    bool hasTexture() const { return m_texture && m_texture->isValid(); }
+
     void draw() const;
     void drawWireframe() const;
 
@@ -77,6 +82,7 @@ private:
 
     std::string m_name;
     std::unique_ptr<Mesh> m_mesh;
+    std::unique_ptr<Texture> m_texture;
     MeshData m_meshData;
     LODMesh m_lodMesh;
 

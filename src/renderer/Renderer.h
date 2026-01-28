@@ -2,6 +2,7 @@
 
 #include "Camera.h"
 #include "core/Shader.h"
+#include "core/Texture.h"
 #include "scene/Scene.h"
 #include "scene/Frustum.h"
 #include "scene/BoundingBox.h"
@@ -39,7 +40,7 @@ public:
     Renderer();
     ~Renderer();
 
-    void init(int width, int height);
+    void init(int width, int height, const std::string& defaultTexturePath = "assets/textures/default_grid.png");
     void render(const Scene& scene, const Camera& camera, float aspectRatio);
     void resize(int width, int height);
 
@@ -71,6 +72,10 @@ public:
     void setLODDebugColors(bool enabled) { m_lodDebugColors = enabled; }
     bool isLODDebugColors() const { return m_lodDebugColors; }
     void toggleLODDebugColors() { m_lodDebugColors = !m_lodDebugColors; }
+
+    void setTexturesEnabled(bool enabled) { m_texturesEnabled = enabled; }
+    bool isTexturesEnabled() const { return m_texturesEnabled; }
+    void toggleTextures() { m_texturesEnabled = !m_texturesEnabled; }
 
     // Triangle stats for LOD display
     uint32_t getRenderedTriangles() const { return m_renderedTriangles; }
@@ -110,6 +115,9 @@ private:
     std::unique_ptr<Shader> m_backgroundShader;
     TextRenderer m_textRenderer;
 
+    // Default texture for untextured objects
+    std::unique_ptr<Texture> m_defaultTexture;
+
     // Background quad VAO/VBO
     GLuint m_backgroundVAO{0};
     GLuint m_backgroundVBO{0};
@@ -141,6 +149,7 @@ private:
 
     bool m_lodEnabled{true};
     bool m_lodDebugColors{false};
+    bool m_texturesEnabled{true};
 
     // Triangle count stats
     uint32_t m_renderedTriangles{0};

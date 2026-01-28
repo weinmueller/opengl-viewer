@@ -7,13 +7,15 @@
 #include <algorithm>
 #include <GLFW/glfw3.h>
 
-Application::Application(int width, int height, const std::string& title, float creaseAngle)
+Application::Application(int width, int height, const std::string& title,
+                         float creaseAngle, const std::string& defaultTexture)
     : m_camera(5.0f)
     , m_creaseAngle(creaseAngle)
+    , m_defaultTexturePath(defaultTexture)
 {
     m_window = std::make_unique<Window>(width, height, title);
     m_renderer = std::make_unique<Renderer>();
-    m_renderer->init(width, height);
+    m_renderer->init(width, height, m_defaultTexturePath);
     m_subdivisionManager = std::make_unique<SubdivisionManager>();
     m_lodManager = std::make_unique<LODManager>();
     m_multipatchManager = std::make_unique<MultiPatchManager>();
@@ -161,6 +163,9 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
                 break;
             case GLFW_KEY_K:
                 m_renderer->toggleLODDebugColors();
+                break;
+            case GLFW_KEY_T:
+                m_renderer->toggleTextures();
                 break;
         }
     }

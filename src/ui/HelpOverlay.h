@@ -11,6 +11,7 @@ struct ToggleStates {
     bool frustumCulling{true};
     bool lodEnabled{true};
     bool lodDebugColors{false};
+    bool texturesEnabled{true};
     // Triangle stats
     uint32_t renderedTriangles{0};
     uint32_t originalTriangles{0};

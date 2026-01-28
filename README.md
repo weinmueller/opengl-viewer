@@ -8,6 +8,8 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 
 - **Modern OpenGL 4.6** - Uses Direct State Access (DSA) for efficient GPU resource management
 - **OBJ Mesh Loading** - Load multiple OBJ files simultaneously with automatic normal handling
+- **Texture Mapping** - Diffuse textures via MTL files (PNG, JPG, TGA, BMP) with T key toggle
+- **Built-in Textures** - Default grid, checker, UV test, brushed metal, wood, concrete patterns
 - **Object Picking** - Click to select objects with visual highlight feedback
 - **Mesh Subdivision** - Loop subdivision (smooth) and midpoint subdivision. Refines all edges by default; use `--angle` for crease preservation. Only subdivides visible objects when none selected.
 - **Parallel Processing** - OpenMP-accelerated subdivision for large meshes (4-5x speedup)
@@ -92,6 +94,16 @@ make
 # Set crease angle threshold to preserve sharp edges (default: 180 = smooth all)
 ./MeshViewer --angle 30 mesh.obj
 
+# Load textured OBJ (requires MTL with map_Kd)
+./MeshViewer assets/meshes/textured/textured_cube.obj
+
+# Use a specific default texture for all objects
+./MeshViewer --texture checker cube.obj           # Built-in checker pattern
+./MeshViewer --texture wood sphere.obj            # Built-in wood texture
+./MeshViewer --texture /path/to/custom.png mesh.obj  # Custom texture file
+
+# Built-in texture options: default_grid, checker, uv_test, brushed_metal, wood, concrete
+
 # Load G+Smo multipatch geometry (requires G+Smo)
 ./MeshViewer assets/gismo/teapot.xml
 
@@ -104,6 +116,7 @@ make
 | Option | Description |
 |--------|-------------|
 | `--angle <degrees>` | Crease angle threshold for subdivision (default: 180). Edges with dihedral angle greater than this are kept sharp. Use lower values (e.g., 30) to preserve sharp edges on cubes, etc. |
+| `--texture <path>` | Default texture for all objects. Can be a full path or built-in name: `default_grid`, `checker`, `uv_test`, `brushed_metal`, `wood`, `concrete` |
 | `--help` | Show help message |
 
 ### Controls
@@ -118,6 +131,7 @@ make
 | S | Subdivide mesh (Loop - smooth) |
 | D | Subdivide mesh (midpoint - keeps shape) |
 | W | Toggle wireframe |
+| T | Toggle textures |
 | C | Toggle back-face culling |
 | G | Toggle frustum culling |
 | L | Toggle LOD system |
@@ -162,6 +176,7 @@ OpenGL/
 │   └── background.vert/frag  # Gradient background
 ├── assets/
 │   ├── meshes/               # Sample OBJ files
+│   ├── textures/             # Built-in textures (grid, checker, wood, etc.)
 │   └── gismo/                # Sample G+Smo multipatch files
 └── external/                 # Third-party libraries (GLAD, GLM, tinyobjloader)
 ```
@@ -182,8 +197,8 @@ OpenGL/
 - [x] LOD (Level of Detail) system with QEM mesh simplification
 - [x] Code refactoring (TaskManager template, shared TextRenderer, unified Progress)
 - [x] G+Smo multipatch support with view-dependent tessellation
+- [x] Texture mapping with MTL support and built-in textures
 - [ ] GPU-based subdivision (compute shaders)
-- [ ] Material and texture support
 
 ## Third-Party Libraries
 
@@ -191,6 +206,7 @@ OpenGL/
 - [GLAD](https://glad.dav1d.de/) - OpenGL loader
 - [GLM](https://github.com/g-truc/glm) - Mathematics library
 - [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) - OBJ file parsing
+- [stb_image](https://github.com/nothings/stb) - Image loading (PNG, JPG, TGA, BMP)
 - [OpenMP](https://www.openmp.org/) - Parallel processing
 - [G+Smo](https://github.com/gismo/gismo) - Geometry + Simulation Modules (optional, for multipatch support)
 

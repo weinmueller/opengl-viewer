@@ -13,6 +13,7 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - **Window** (`src/core/Window.h`) - GLFW wrapper with input callbacks
 - **Shader** (`src/core/Shader.h`) - Shader compilation and uniform management
 - **Timer** (`src/core/Timer.h`) - Frame timing and FPS calculation
+- **Texture** (`src/core/Texture.h`) - OpenGL texture loading with DSA and mipmapping
 
 ### Utilities (`src/util/`)
 - **Result** (`src/util/Result.h`) - Generic error handling type (`Result<T, E>`)
@@ -69,6 +70,7 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - GLAD (OpenGL loader)
 - GLM (math)
 - tinyobjloader (OBJ parsing)
+- stb_image (texture loading - PNG, JPG, TGA, BMP)
 - G+Smo (optional, multipatch NURBS/B-spline geometry)
 
 ## Build Commands
@@ -78,6 +80,16 @@ cd build && cmake .. && make
 
 # With crease angle to preserve sharp edges (default is 180 = smooth all)
 ./MeshViewer --angle 30 assets/meshes/cube.obj
+
+# Load textured OBJ (MTL file with map_Kd texture reference)
+./MeshViewer assets/meshes/textured/textured_cube.obj
+
+# Use specific default texture for all objects
+./MeshViewer --texture checker cube.obj      # Built-in checker
+./MeshViewer --texture wood sphere.obj       # Built-in wood
+./MeshViewer -t uv_test torus.obj            # Short flag
+
+# Built-in textures: default_grid, checker, uv_test, brushed_metal, wood, concrete
 
 # Load G+Smo multipatch (requires G+Smo)
 ./MeshViewer assets/gismo/teapot.xml
@@ -89,7 +101,10 @@ cmake -DGISMO_ROOT=/path/to/gismo ..  # Specify G+Smo location
 ```
 
 ## Current Features
-- OBJ mesh loading (multiple files supported)
+- OBJ mesh loading (multiple files supported) with MTL material support
+- **Diffuse texture mapping** via MTL `map_Kd` (PNG, JPG, TGA, BMP formats) - toggle with T key
+- **Built-in textures** - default_grid, checker, uv_test, brushed_metal, wood, concrete
+- Default texture via `--texture` flag or `assets/textures/default_grid.png`
 - Object picking with right-click selection
 - Selection highlighting (orange tint)
 - Mesh subdivision (S = Loop smooth, D = midpoint) - only visible objects when none selected
@@ -144,8 +159,8 @@ cmake -DGISMO_ROOT=/path/to/gismo ..  # Specify G+Smo location
 
 ### Additional Features
 - [x] G+Smo multipatch support with view-dependent tessellation
-- [ ] Material support (MTL files)
-- [ ] Texture mapping
+- [x] Material support (MTL files) - diffuse texture path extraction
+- [x] Texture mapping - diffuse textures with mipmapping
 - [ ] Screenshot export (PNG)
 - [ ] Camera animation/keyframes
 - [ ] Measurement tools
@@ -167,6 +182,7 @@ cmake -DGISMO_ROOT=/path/to/gismo ..  # Specify G+Smo location
 - Add UI overlays: Use `TextRenderer` for text/quad rendering
 - Modify tessellation levels: Edit `TessellationThresholds` in `MultiPatchManager.h` and levels array in `.cpp`
 - Add new patch types: Extend `PatchObject` or add new geometry evaluation in `GismoLoader::tessellatePatch()`
+- Add new textures: Place PNG/JPG files in `assets/textures/`, use via `--texture filename`
 
 ## Design Patterns
 

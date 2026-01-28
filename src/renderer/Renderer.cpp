@@ -17,7 +17,7 @@ Renderer::~Renderer() {
     }
 }
 
-void Renderer::init(int width, int height) {
+void Renderer::init(int width, int height, const std::string& defaultTexturePath) {
     m_meshShader = std::make_unique<Shader>("shaders/mesh.vert", "shaders/mesh.frag");
     m_pickingShader = std::make_unique<Shader>("shaders/picking.vert", "shaders/picking.frag");
     m_backgroundShader = std::make_unique<Shader>("shaders/background.vert", "shaders/background.frag");
@@ -45,6 +45,12 @@ void Renderer::init(int width, int height) {
     glVertexArrayAttribBinding(m_backgroundVAO, 0, 0);
 
     initPickingFBO(width, height);
+
+    // Load default texture for untextured objects
+    m_defaultTexture = std::make_unique<Texture>();
+    if (!m_defaultTexture->load(defaultTexturePath)) {
+        std::cerr << "Warning: Could not load default texture: " << defaultTexturePath << std::endl;
+    }
 
     // Initialize text renderer and pass to overlays
     m_textRenderer.init();
@@ -224,6 +230,18 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
 
         m_meshShader->setMat3("normalMatrix", obj->getNormalMatrix());
 
+        // Bind texture (only if textures are enabled globally)
+        bool hasObjectTexture = obj->hasTexture();
+        m_meshShader->setBool("hasTexture", m_texturesEnabled);
+        if (m_texturesEnabled) {
+            if (hasObjectTexture) {
+                obj->getTexture()->bind(0);
+            } else if (m_defaultTexture && m_defaultTexture->isValid()) {
+                m_defaultTexture->bind(0);
+            }
+        }
+        m_meshShader->setInt("diffuseMap", 0);
+
         if (m_wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             meshToRender->draw();
@@ -240,6 +258,7 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     toggles.frustumCulling = m_frustumCulling;
     toggles.lodEnabled = m_lodEnabled;
     toggles.lodDebugColors = m_lodDebugColors;
+    toggles.texturesEnabled = m_texturesEnabled;
     toggles.renderedTriangles = m_renderedTriangles;
     toggles.originalTriangles = m_originalTriangles;
     toggles.lodSavingsPercent = getLODSavingsPercent();

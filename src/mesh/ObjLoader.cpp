@@ -4,6 +4,7 @@
 #include "ObjLoader.h"
 #include <iostream>
 #include <unordered_map>
+#include <filesystem>
 
 namespace {
     struct VertexHash {
@@ -30,8 +31,15 @@ namespace {
 bool ObjLoader::load(const std::string& path, MeshData& outData) {
     outData.clear();
 
+    // Get directory of OBJ file for MTL search
+    std::filesystem::path objPath(path);
+    std::string objDir = objPath.parent_path().string();
+    if (objDir.empty()) {
+        objDir = ".";
+    }
+
     tinyobj::ObjReaderConfig reader_config;
-    reader_config.mtl_search_path = "";
+    reader_config.mtl_search_path = objDir;
     reader_config.triangulate = true;
 
     tinyobj::ObjReader reader;
@@ -49,6 +57,21 @@ bool ObjLoader::load(const std::string& path, MeshData& outData) {
 
     const auto& attrib = reader.GetAttrib();
     const auto& shapes = reader.GetShapes();
+    const auto& materials = reader.GetMaterials();
+
+    // Extract diffuse texture from first material with a texture
+    for (const auto& mat : materials) {
+        if (!mat.diffuse_texname.empty()) {
+            // Resolve texture path relative to OBJ directory
+            std::filesystem::path texPath(mat.diffuse_texname);
+            if (texPath.is_relative()) {
+                texPath = std::filesystem::path(objDir) / texPath;
+            }
+            outData.texturePath = texPath.string();
+            std::cout << "Found diffuse texture: " << outData.texturePath << std::endl;
+            break;
+        }
+    }
 
     std::unordered_map<Vertex, uint32_t, VertexHash, VertexEqual> uniqueVertices;
 
