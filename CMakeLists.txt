@@ -19,6 +19,96 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
 find_package(OpenMP REQUIRED)
 
+# G+Smo (optional, for multipatch geometry support)
+option(WITH_GISMO "Enable G+Smo multipatch support" ON)
+
+if(WITH_GISMO)
+    # Build hint paths from environment variables
+    set(GISMO_HINTS "")
+    if(DEFINED ENV{GISMO_ROOT})
+        list(APPEND GISMO_HINTS "$ENV{GISMO_ROOT}")
+    endif()
+    if(DEFINED ENV{GISMO_DIR})
+        list(APPEND GISMO_HINTS "$ENV{GISMO_DIR}")
+    endif()
+    # Common sibling directory
+    list(APPEND GISMO_HINTS "${CMAKE_SOURCE_DIR}/../gismo")
+
+    # Allow user to specify path via cmake -DGISMO_ROOT=...
+    set(GISMO_ROOT "" CACHE PATH "Path to G+Smo installation or source")
+    if(GISMO_ROOT)
+        list(INSERT GISMO_HINTS 0 "${GISMO_ROOT}")
+    endif()
+
+    # Find G+Smo library
+    find_library(GISMO_LIBRARY
+        NAMES gismo
+        HINTS ${GISMO_HINTS}
+        PATH_SUFFIXES lib build/lib
+        PATHS
+            /usr/local
+            /usr
+            /opt/gismo
+    )
+
+    # Find G+Smo headers (gismo.h is in src/ for source builds)
+    find_path(GISMO_INCLUDE_DIR
+        NAMES gismo.h
+        HINTS ${GISMO_HINTS}
+        PATH_SUFFIXES src include include/gismo
+        PATHS
+            /usr/local
+            /usr
+            /opt/gismo
+    )
+
+    # Find gsEigen (in external/ for source builds)
+    find_path(GISMO_EXTERNAL_DIR
+        NAMES gsEigen/Core Eigen/Core
+        HINTS ${GISMO_HINTS}
+        PATH_SUFFIXES external include
+        PATHS
+            /usr/local
+            /usr
+            /opt/gismo
+    )
+
+    # Find gismo_config.h (in build dir for source builds, or include for installed)
+    find_path(GISMO_CONFIG_DIR
+        NAMES gsCore/gsConfig.h gismo/gsCore/gsConfig.h
+        HINTS ${GISMO_HINTS}
+        PATH_SUFFIXES build include
+        PATHS
+            /usr/local
+            /usr
+            /opt/gismo
+    )
+
+    if(GISMO_LIBRARY AND GISMO_INCLUDE_DIR)
+        set(GISMO_FOUND TRUE)
+        set(GISMO_INCLUDE_DIRS ${GISMO_INCLUDE_DIR})
+
+        if(GISMO_EXTERNAL_DIR)
+            list(APPEND GISMO_INCLUDE_DIRS ${GISMO_EXTERNAL_DIR})
+        endif()
+        if(GISMO_CONFIG_DIR AND NOT "${GISMO_CONFIG_DIR}" STREQUAL "${GISMO_INCLUDE_DIR}")
+            list(APPEND GISMO_INCLUDE_DIRS ${GISMO_CONFIG_DIR})
+        endif()
+
+        message(STATUS "Found G+Smo: ${GISMO_LIBRARY}")
+        message(STATUS "G+Smo includes: ${GISMO_INCLUDE_DIRS}")
+    else()
+        set(GISMO_FOUND FALSE)
+        message(STATUS "G+Smo not found. Multipatch support disabled.")
+        message(STATUS "  To enable: cmake -DGISMO_ROOT=/path/to/gismo ..")
+        message(STATUS "  Or set environment variable GISMO_ROOT")
+        message(STATUS "  Or disable: cmake -DWITH_GISMO=OFF ..")
+    endif()
+else()
+    set(GISMO_FOUND FALSE)
+    message(STATUS "G+Smo support disabled (WITH_GISMO=OFF)")
+endif()
+
 # GLAD (OpenGL loader - glad2 generates gl.c)
 add_library(glad STATIC
     ${CMAKE_SOURCE_DIR}/external/glad/src/gl.c
@@ -62,6 +152,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     tinyobjloader
     OpenMP::OpenMP_CXX
 )
+
+# Link G+Smo if available
+if(GISMO_FOUND)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${GISMO_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${GISMO_LIBRARY})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE GISMO_AVAILABLE)
+endif()
 
 # Copy shaders to build directory
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

@@ -1,5 +1,6 @@
 #include "MeshLoader.h"
 #include "ObjLoader.h"
+#include "multipatch/GismoLoader.h"
 #include <algorithm>
 
 std::unique_ptr<MeshLoader> MeshLoader::createForFile(const std::string& path) {
@@ -13,6 +14,10 @@ std::unique_ptr<MeshLoader> MeshLoader::createForFile(const std::string& path) {
 
     if (ext == ".obj") {
         return std::make_unique<ObjLoader>();
+    }
+
+    if (ext == ".xml") {
+        return std::make_unique<GismoLoader>();
     }
 
     return nullptr;

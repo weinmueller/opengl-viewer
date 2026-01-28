@@ -14,6 +14,7 @@
 
 class SubdivisionManager;
 class LODManager;
+class MultiPatchManager;
 
 struct Light {
     glm::vec3 direction{-0.5f, -1.0f, -0.3f};
@@ -60,6 +61,7 @@ public:
 
     void setSubdivisionManager(SubdivisionManager* manager) { m_subdivisionManager = manager; }
     void setLODManager(LODManager* manager) { m_lodManager = manager; }
+    void setMultiPatchManager(MultiPatchManager* manager) { m_multipatchManager = manager; }
 
     // LOD controls
     void setLODEnabled(bool enabled) { m_lodEnabled = enabled; }
@@ -135,6 +137,7 @@ private:
     ProgressOverlay m_progressOverlay;
     SubdivisionManager* m_subdivisionManager{nullptr};
     LODManager* m_lodManager{nullptr};
+    MultiPatchManager* m_multipatchManager{nullptr};
 
     bool m_lodEnabled{true};
     bool m_lodDebugColors{false};

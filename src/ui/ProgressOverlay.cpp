@@ -1,6 +1,7 @@
 #include "ProgressOverlay.h"
 #include "geometry/SubdivisionManager.h"
 #include "lod/LODManager.h"
+#include "multipatch/MultiPatchManager.h"
 #include <glm/glm.hpp>
 #include <sstream>
 #include <iomanip>
@@ -26,14 +27,16 @@ void ProgressOverlay::renderProgressBar(float x, float y, float width, float hei
 
 void ProgressOverlay::render(int screenWidth, int screenHeight,
                              const SubdivisionManager* subdivManager,
-                             const LODManager* lodManager) {
+                             const LODManager* lodManager,
+                             const MultiPatchManager* multipatchManager) {
     if (!m_textRenderer) return;
 
-    // Check if subdivision is busy
+    // Check if any manager is busy
     bool subdivBusy = subdivManager && subdivManager->isBusy();
     bool lodBusy = lodManager && lodManager->isBusy();
+    bool tessBusy = multipatchManager && multipatchManager->isBusy();
 
-    if (!subdivBusy && !lodBusy) {
+    if (!subdivBusy && !lodBusy && !tessBusy) {
         return;
     }
 
@@ -61,6 +64,15 @@ void ProgressOverlay::render(int screenWidth, int screenHeight,
         phaseName = progress->getPhaseName();
         queuedCount = lodManager->getQueuedTaskCount();
         taskType = "Generating LOD";
+    } else if (tessBusy) {
+        const Progress* progress = multipatchManager->getActiveProgress();
+        if (!progress) return;
+
+        objectName = multipatchManager->getActiveObjectName();
+        totalProgress = progress->totalProgress.load(std::memory_order_relaxed);
+        phaseName = progress->getPhaseName();
+        queuedCount = multipatchManager->getQueuedTaskCount();
+        taskType = "Tessellating";
     }
 
     // Overlay dimensions

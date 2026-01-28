@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "lod/LODSelector.h"
 #include "lod/LODManager.h"
+#include "multipatch/MultiPatchManager.h"
 #include <iostream>
 
 Renderer::Renderer() {
@@ -247,8 +248,8 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     // Render help overlay on top (toggled with H key)
     m_helpOverlay.render(m_pickingWidth, m_pickingHeight, toggles);
 
-    // Render progress overlay if subdivision or LOD generation is active
-    m_progressOverlay.render(m_pickingWidth, m_pickingHeight, m_subdivisionManager, m_lodManager);
+    // Render progress overlay if subdivision, LOD generation, or tessellation is active
+    m_progressOverlay.render(m_pickingWidth, m_pickingHeight, m_subdivisionManager, m_lodManager, m_multipatchManager);
 }
 
 int Renderer::pick(const Scene& scene, const Camera& camera, float aspectRatio, int mouseX, int mouseY) {

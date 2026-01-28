@@ -4,6 +4,7 @@
 #include "async/LODTask.h"
 #include "async/SubdivisionTask.h"
 #include <iostream>
+#include <algorithm>
 #include <GLFW/glfw3.h>
 
 Application::Application(int width, int height, const std::string& title, float creaseAngle)
@@ -15,10 +16,12 @@ Application::Application(int width, int height, const std::string& title, float 
     m_renderer->init(width, height);
     m_subdivisionManager = std::make_unique<SubdivisionManager>();
     m_lodManager = std::make_unique<LODManager>();
+    m_multipatchManager = std::make_unique<MultiPatchManager>();
 
     // Pass managers to renderer for progress display
     m_renderer->setSubdivisionManager(m_subdivisionManager.get());
     m_renderer->setLODManager(m_lodManager.get());
+    m_renderer->setMultiPatchManager(m_multipatchManager.get());
 
     setupCallbacks();
 }
@@ -94,6 +97,13 @@ void Application::update(float deltaTime) {
 
     // Process completed LOD generation tasks
     m_lodManager->processCompletedTasks();
+
+    // Process completed tessellation tasks for multipatch
+    m_multipatchManager->processCompletedTasks();
+
+    // Update multipatch tessellation based on view
+    m_multipatchManager->updateTessellation(m_camera, m_window->getAspectRatio(),
+                                            m_window->getWidth(), m_window->getHeight());
 
     // Check for objects that need LOD regeneration (after subdivision)
     for (const auto& obj : m_scene.getObjects()) {
@@ -220,6 +230,19 @@ void Application::onResize(int width, int height) {
 }
 
 bool Application::loadMesh(const std::string& path) {
+    // Check if this is a multipatch file (G+Smo XML)
+    size_t dotPos = path.rfind('.');
+    if (dotPos != std::string::npos) {
+        std::string ext = path.substr(dotPos);
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+        if (ext == ".xml") {
+            // Load as multipatch with view-dependent tessellation
+            return m_multipatchManager->load(path, m_scene, 16);
+        }
+    }
+
+    // Standard mesh loading
     auto loader = MeshLoader::createForFile(path);
     if (!loader) {
         std::cerr << "No loader available for: " << path << std::endl;

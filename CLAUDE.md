@@ -23,6 +23,7 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - **Progress** (`src/async/Progress.h`) - Unified atomic progress tracking struct
 - **SubdivisionTask** (`src/async/SubdivisionTask.h`) - Subdivision task data and progress
 - **LODTask** (`src/async/LODTask.h`) - LOD generation task data and progress
+- **TessellationTask** (`src/async/TessellationTask.h`) - Patch tessellation task data and progress
 
 ### Rendering (`src/renderer/`)
 - **Renderer** (`src/renderer/Renderer.h`) - Main render loop with Blinn-Phong lighting
@@ -50,6 +51,12 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - **MeshSimplifier** (`src/lod/MeshSimplifier.h`) - QEM-based mesh decimation algorithm
 - **LODManager** (`src/lod/LODManager.h`) - Inherits TaskManager for background LOD generation
 
+### Multipatch System (`src/multipatch/`)
+- **GismoLoader** (`src/multipatch/GismoLoader.h`) - Loads G+Smo XML multipatch files, tessellates patches
+- **PatchObject** (`src/multipatch/PatchObject.h`) - SceneObject subclass with dynamic tessellation support
+- **MultiPatchManager** (`src/multipatch/MultiPatchManager.h`) - Manages view-dependent tessellation refinement
+- **TessellationManager** (`src/multipatch/TessellationManager.h`) - Inherits TaskManager for background tessellation
+
 ### User Interface (`src/ui/`)
 - **HelpOverlay** (`src/ui/HelpOverlay.h`) - In-window help display (uses TextRenderer)
 - **ProgressOverlay** (`src/ui/ProgressOverlay.h`) - Progress bar display (uses TextRenderer)
@@ -62,6 +69,7 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - GLAD (OpenGL loader)
 - GLM (math)
 - tinyobjloader (OBJ parsing)
+- G+Smo (optional, multipatch NURBS/B-spline geometry)
 
 ## Build Commands
 ```bash
@@ -70,6 +78,14 @@ cd build && cmake .. && make
 
 # With crease angle to preserve sharp edges (default is 180 = smooth all)
 ./MeshViewer --angle 30 assets/meshes/cube.obj
+
+# Load G+Smo multipatch (requires G+Smo)
+./MeshViewer assets/gismo/teapot.xml
+
+# G+Smo cmake options
+cmake -DWITH_GISMO=OFF ..             # Disable G+Smo support
+cmake -DGISMO_ROOT=/path/to/gismo ..  # Specify G+Smo location
+# Or set environment: export GISMO_ROOT=/path/to/gismo
 ```
 
 ## Current Features
@@ -100,6 +116,11 @@ cd build && cmake .. && make
 - Screen-space LOD selection with hysteresis to prevent popping
 - Automatic LOD regeneration after mesh subdivision
 - ESC cancels active subdivision/LOD generation (or exits if idle)
+- **G+Smo multipatch support** - Load NURBS/B-spline geometries from XML files
+- **View-dependent tessellation** - Automatic patch refinement based on screen-space size
+- Tessellation levels: 4, 8, 12, 16, 24, 32, 48, 64, 128 samples per direction
+- Background tessellation with progress overlay
+- Per-patch screen-space size calculation with hysteresis to prevent thrashing
 
 ## Future Improvements
 
@@ -122,6 +143,7 @@ cd build && cmake .. && make
 - [x] In-window help overlay (H key to show controls)
 
 ### Additional Features
+- [x] G+Smo multipatch support with view-dependent tessellation
 - [ ] Material support (MTL files)
 - [ ] Texture mapping
 - [ ] Screenshot export (PNG)
@@ -143,6 +165,8 @@ cd build && cmake .. && make
 - Add input handling: Use callbacks in `Application::setupCallbacks()`
 - Add background tasks: Inherit from `TaskManager<YourTaskType>` in `src/async/`
 - Add UI overlays: Use `TextRenderer` for text/quad rendering
+- Modify tessellation levels: Edit `TessellationThresholds` in `MultiPatchManager.h` and levels array in `.cpp`
+- Add new patch types: Extend `PatchObject` or add new geometry evaluation in `GismoLoader::tessellatePatch()`
 
 ## Design Patterns
 
@@ -169,4 +193,19 @@ Result<MeshData> load() {
     if (error) return Result<MeshData>::error("Failed");
     return Result<MeshData>::ok(data);
 }
+```
+
+### View-Dependent Tessellation
+MultiPatchManager handles dynamic tessellation refinement:
+- Each patch stores a tessellation callback (captures G+Smo geometry reference)
+- Screen-space size calculated per patch using bounding box projection
+- Tessellation level selected via logarithmic interpolation (4→128)
+- Hysteresis (20%) prevents rapid level switching
+- Background tessellation via TessellationManager
+
+```cpp
+// Tessellation levels based on screen size
+TessellationThresholds thresholds;
+thresholds.minLevel = 4;      // Below 20px screen size
+thresholds.maxLevel = 128;    // Above 500px screen size
 ```

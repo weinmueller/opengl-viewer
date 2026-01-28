@@ -26,6 +26,8 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **6 LOD Levels** - 100% → 70% → 50% → 35% → 25% → 15% triangle reduction (gentler for smooth meshes)
 - **Screen-Space LOD Selection** - Automatic detail adjustment based on object screen size
 - **LOD Debug Colors** - Visualize LOD levels with color coding (K key)
+- **G+Smo Multipatch Support** - Load NURBS/B-spline multipatch geometries from XML files
+- **View-Dependent Tessellation** - Automatic refinement of patches based on screen-space size (4→128 samples)
 
 ## Screenshots
 
@@ -38,10 +40,31 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - OpenGL 4.6 compatible GPU and drivers
 - GLFW3
 - OpenMP (usually included with GCC/Clang)
+- G+Smo (optional, for multipatch NURBS/B-spline support)
 
 ### Ubuntu/Debian
 ```bash
 sudo apt install cmake libgl-dev libglfw3-dev libomp-dev
+```
+
+### G+Smo (Optional)
+For multipatch geometry support, G+Smo is detected automatically from:
+- Environment variable `GISMO_ROOT` or `GISMO_DIR`
+- CMake option `-DGISMO_ROOT=/path/to/gismo`
+- System paths (`/usr/local`, `/usr`, `/opt/gismo`)
+- Sibling directory `../gismo`
+
+To build G+Smo from source:
+```bash
+git clone https://github.com/gismo/gismo.git
+cd gismo && mkdir build && cd build
+cmake .. && make -j$(nproc)
+```
+
+CMake options:
+```bash
+cmake -DWITH_GISMO=OFF ..          # Disable G+Smo support
+cmake -DGISMO_ROOT=/path/to/gismo .. # Specify G+Smo location
 ```
 
 ## Building
@@ -68,6 +91,9 @@ make
 
 # Set crease angle threshold to preserve sharp edges (default: 180 = smooth all)
 ./MeshViewer --angle 30 mesh.obj
+
+# Load G+Smo multipatch geometry (requires G+Smo)
+./MeshViewer assets/gismo/teapot.xml
 
 # Show help
 ./MeshViewer --help
@@ -116,12 +142,18 @@ OpenGL/
 │   │   ├── TaskManager.h     # Template base for background tasks
 │   │   ├── Progress.h        # Unified progress tracking
 │   │   ├── SubdivisionTask.h # Subdivision task data
-│   │   └── LODTask.h         # LOD generation task data
+│   │   ├── LODTask.h         # LOD generation task data
+│   │   └── TessellationTask.h # Tessellation task data
 │   ├── renderer/             # Camera, Renderer
 │   ├── scene/                # Scene graph, Objects
 │   ├── mesh/                 # Mesh loading and GPU resources
 │   ├── geometry/             # Subdivision algorithms
 │   ├── lod/                  # Level of Detail system
+│   ├── multipatch/           # G+Smo multipatch support
+│   │   ├── GismoLoader.h/cpp # G+Smo XML file loader
+│   │   ├── PatchObject.h/cpp # Patch with dynamic tessellation
+│   │   ├── MultiPatchManager.h/cpp # View-dependent refinement
+│   │   └── TessellationManager.h/cpp # Background tessellation
 │   └── ui/                   # User interface overlays
 ├── shaders/
 │   ├── mesh.vert/frag        # Main mesh rendering
@@ -129,7 +161,8 @@ OpenGL/
 │   ├── text.vert/frag        # Text rendering
 │   └── background.vert/frag  # Gradient background
 ├── assets/
-│   └── meshes/               # Sample mesh files
+│   ├── meshes/               # Sample OBJ files
+│   └── gismo/                # Sample G+Smo multipatch files
 └── external/                 # Third-party libraries (GLAD, GLM, tinyobjloader)
 ```
 
@@ -148,6 +181,7 @@ OpenGL/
 - [x] Background tessellation with progress indicators
 - [x] LOD (Level of Detail) system with QEM mesh simplification
 - [x] Code refactoring (TaskManager template, shared TextRenderer, unified Progress)
+- [x] G+Smo multipatch support with view-dependent tessellation
 - [ ] GPU-based subdivision (compute shaders)
 - [ ] Material and texture support
 
@@ -158,6 +192,7 @@ OpenGL/
 - [GLM](https://github.com/g-truc/glm) - Mathematics library
 - [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) - OBJ file parsing
 - [OpenMP](https://www.openmp.org/) - Parallel processing
+- [G+Smo](https://github.com/gismo/gismo) - Geometry + Simulation Modules (optional, for multipatch support)
 
 ## License
 

@@ -36,6 +36,17 @@ struct BoundingBox {
         return min.x <= max.x && min.y <= max.y && min.z <= max.z;
     }
 
+    void getCorners(glm::vec3 corners[8]) const {
+        corners[0] = {min.x, min.y, min.z};
+        corners[1] = {max.x, min.y, min.z};
+        corners[2] = {min.x, max.y, min.z};
+        corners[3] = {max.x, max.y, min.z};
+        corners[4] = {min.x, min.y, max.z};
+        corners[5] = {max.x, min.y, max.z};
+        corners[6] = {min.x, max.y, max.z};
+        corners[7] = {max.x, max.y, max.z};
+    }
+
     BoundingBox transformed(const glm::mat4& transform) const {
         glm::vec3 corners[8] = {
             {min.x, min.y, min.z},
