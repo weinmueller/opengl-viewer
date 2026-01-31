@@ -92,6 +92,11 @@ void Mesh::setupVertexAttributes(BufferSet& buf) {
     glEnableVertexArrayAttrib(buf.vao, 2);
     glVertexArrayAttribFormat(buf.vao, 2, 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, texCoord));
     glVertexArrayAttribBinding(buf.vao, 2, 0);
+
+    // Solution value attribute (for Poisson visualization)
+    glEnableVertexArrayAttrib(buf.vao, 3);
+    glVertexArrayAttribFormat(buf.vao, 3, 1, GL_FLOAT, GL_FALSE, offsetof(Vertex, solutionValue));
+    glVertexArrayAttribBinding(buf.vao, 3, 0);
 }
 
 void Mesh::upload(const MeshData& data) {

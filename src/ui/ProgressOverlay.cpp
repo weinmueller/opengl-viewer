@@ -2,6 +2,7 @@
 #include "geometry/SubdivisionManager.h"
 #include "lod/LODManager.h"
 #include "multipatch/MultiPatchManager.h"
+#include "multipatch/PoissonManager.h"
 #include <glm/glm.hpp>
 #include <sstream>
 #include <iomanip>
@@ -35,8 +36,9 @@ void ProgressOverlay::render(int screenWidth, int screenHeight,
     bool subdivBusy = subdivManager && subdivManager->isBusy();
     bool lodBusy = lodManager && lodManager->isBusy();
     bool tessBusy = multipatchManager && multipatchManager->isBusy();
+    bool poissonBusy = multipatchManager && multipatchManager->isSolvingPoisson();
 
-    if (!subdivBusy && !lodBusy && !tessBusy) {
+    if (!subdivBusy && !lodBusy && !tessBusy && !poissonBusy) {
         return;
     }
 
@@ -64,6 +66,16 @@ void ProgressOverlay::render(int screenWidth, int screenHeight,
         phaseName = progress->getPhaseName();
         queuedCount = lodManager->getQueuedTaskCount();
         taskType = "Generating LOD";
+    } else if (poissonBusy) {
+        const PoissonManager* poissonMgr = multipatchManager->getPoissonManager();
+        const Progress* progress = poissonMgr->getActiveProgress();
+        if (!progress) return;
+
+        objectName = poissonMgr->getActiveObjectName();
+        totalProgress = progress->totalProgress.load(std::memory_order_relaxed);
+        phaseName = progress->getPhaseName();
+        queuedCount = poissonMgr->getQueuedTaskCount();
+        taskType = "Solving Poisson";
     } else if (tessBusy) {
         const Progress* progress = multipatchManager->getActiveProgress();
         if (!progress) return;

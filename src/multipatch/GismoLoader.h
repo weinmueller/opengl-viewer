@@ -14,6 +14,9 @@ namespace gismo {
 }
 #endif
 
+// Forward declaration for Poisson solution
+struct PoissonSolution;
+
 // Result of loading a multipatch - contains mesh data for each patch
 struct MultiPatchData {
     std::vector<MeshData> patches;
@@ -50,6 +53,12 @@ public:
     // Tessellate a single patch at given resolution
     static MeshData tessellatePatch(const gismo::gsGeometry<double>& patch,
                                      int uSamples, int vSamples);
+
+    // Tessellate a patch with solution values evaluated at each vertex
+    static MeshData tessellatePatchWithSolution(const gismo::gsGeometry<double>& patch,
+                                                 int uSamples, int vSamples,
+                                                 const PoissonSolution* solution,
+                                                 int patchIndex);
 #endif
 
     // Set default tessellation level

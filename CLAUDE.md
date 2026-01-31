@@ -25,6 +25,7 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - **SubdivisionTask** (`src/async/SubdivisionTask.h`) - Subdivision task data and progress
 - **LODTask** (`src/async/LODTask.h`) - LOD generation task data and progress
 - **TessellationTask** (`src/async/TessellationTask.h`) - Patch tessellation task data and progress
+- **PoissonTask** (`src/async/PoissonTask.h`) - Poisson solver task data and solution storage
 
 ### Rendering (`src/renderer/`)
 - **Renderer** (`src/renderer/Renderer.h`) - Main render loop with Blinn-Phong lighting
@@ -57,6 +58,7 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - **PatchObject** (`src/multipatch/PatchObject.h`) - SceneObject subclass with dynamic tessellation support
 - **MultiPatchManager** (`src/multipatch/MultiPatchManager.h`) - Manages view-dependent tessellation refinement
 - **TessellationManager** (`src/multipatch/TessellationManager.h`) - Inherits TaskManager for background tessellation
+- **PoissonManager** (`src/multipatch/PoissonManager.h`) - Inherits TaskManager for background Poisson solving
 
 ### User Interface (`src/ui/`)
 - **HelpOverlay** (`src/ui/HelpOverlay.h`) - In-window help display (uses TextRenderer)
@@ -130,12 +132,14 @@ cmake -DGISMO_ROOT=/path/to/gismo ..  # Specify G+Smo location
 - LOD toggle (L key) and debug colors (K key) showing LOD levels
 - Screen-space LOD selection with hysteresis to prevent popping
 - Automatic LOD regeneration after mesh subdivision
-- ESC cancels active subdivision/LOD generation (or exits if idle)
+- ESC cancels active subdivision/LOD generation/Poisson solving (or exits if idle)
 - **G+Smo multipatch support** - Load NURBS/B-spline geometries from XML files
 - **View-dependent tessellation** - Automatic patch refinement based on screen-space size
 - Tessellation levels: 4, 8, 12, 16, 24, 32, 48, 64, 128 samples per direction
 - Background tessellation with progress overlay
 - Per-patch screen-space size calculation with hysteresis to prevent thrashing
+- **Poisson BVP solving** - Press P to solve Poisson equation on BVP files (background processing)
+- **Solution field visualization** - Blue-white-red colormap for solution values (toggle with P key)
 
 ## Future Improvements
 
@@ -183,6 +187,7 @@ cmake -DGISMO_ROOT=/path/to/gismo ..  # Specify G+Smo location
 - Modify tessellation levels: Edit `TessellationThresholds` in `MultiPatchManager.h` and levels array in `.cpp`
 - Add new patch types: Extend `PatchObject` or add new geometry evaluation in `GismoLoader::tessellatePatch()`
 - Add new textures: Place PNG/JPG files in `assets/textures/`, use via `--texture filename`
+- Modify Poisson solver: Edit `PoissonManager::processTask()` for solver settings, `mesh.frag` for colormap
 
 ## Design Patterns
 

@@ -130,9 +130,13 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
         switch (key) {
             case GLFW_KEY_ESCAPE:
-                // Cancel subdivision if busy, otherwise exit
+                // Cancel active background tasks, or exit if idle
                 if (m_subdivisionManager->isBusy()) {
                     m_subdivisionManager->cancelAll();
+                } else if (m_multipatchManager->isSolvingPoisson()) {
+                    m_multipatchManager->getPoissonManager()->cancelAll();
+                } else if (m_multipatchManager->isBusy()) {
+                    m_multipatchManager->cancelAll();
                 } else {
                     glfwSetWindowShouldClose(m_window->getHandle(), true);
                 }
@@ -166,6 +170,17 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
                 break;
             case GLFW_KEY_T:
                 m_renderer->toggleTextures();
+                break;
+            case GLFW_KEY_P:
+                // Poisson solving / solution visualization toggle
+                if (m_multipatchManager->hasSolution()) {
+                    // Toggle visualization if already solved
+                    m_renderer->toggleSolutionVisualization();
+                } else if (m_multipatchManager->canSolvePoisson() &&
+                           !m_multipatchManager->isSolvingPoisson()) {
+                    // Start solving if BVP file and not already solving
+                    m_multipatchManager->startPoissonSolving();
+                }
                 break;
         }
     }

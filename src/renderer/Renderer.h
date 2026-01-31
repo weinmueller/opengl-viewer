@@ -77,6 +77,11 @@ public:
     bool isTexturesEnabled() const { return m_texturesEnabled; }
     void toggleTextures() { m_texturesEnabled = !m_texturesEnabled; }
 
+    // Solution visualization controls
+    void setSolutionVisualization(bool enabled) { m_showSolution = enabled; }
+    bool isSolutionVisualization() const { return m_showSolution; }
+    void toggleSolutionVisualization() { m_showSolution = !m_showSolution; }
+
     // Triangle stats for LOD display
     uint32_t getRenderedTriangles() const { return m_renderedTriangles; }
     uint32_t getOriginalTriangles() const { return m_originalTriangles; }
@@ -150,6 +155,7 @@ private:
     bool m_lodEnabled{true};
     bool m_lodDebugColors{false};
     bool m_texturesEnabled{true};
+    bool m_showSolution{false};
 
     // Triangle count stats
     uint32_t m_renderedTriangles{0};

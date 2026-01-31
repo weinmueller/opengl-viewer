@@ -2,6 +2,7 @@
 
 #include "PatchObject.h"
 #include "TessellationManager.h"
+#include "PoissonManager.h"
 #include "scene/Scene.h"
 #include "renderer/Camera.h"
 #include <string>
@@ -58,6 +59,19 @@ public:
     void setAutoRefinement(bool enabled) { m_autoRefinement = enabled; }
     bool isAutoRefinementEnabled() const { return m_autoRefinement; }
 
+    // Poisson solving controls
+    bool canSolvePoisson() const { return m_hasBVPData; }
+    void startPoissonSolving();
+    bool isSolvingPoisson() const { return m_poissonManager.isBusy(); }
+    bool hasSolution() const { return m_poissonManager.hasSolution(); }
+    float getSolutionMin() const { return m_poissonManager.getSolutionMin(); }
+    float getSolutionMax() const { return m_poissonManager.getSolutionMax(); }
+    PoissonManager* getPoissonManager() { return &m_poissonManager; }
+    const PoissonManager* getPoissonManager() const { return &m_poissonManager; }
+
+    // Re-tessellate all patches with solution values
+    void retessellateWithSolution();
+
 private:
     // Calculate appropriate tessellation level based on screen size
     int calculateTessLevel(float screenSize) const;
@@ -77,6 +91,9 @@ private:
     // Background tessellation manager
     TessellationManager m_tessManager;
 
+    // Background Poisson solver
+    PoissonManager m_poissonManager;
+
     // Tessellation thresholds
     TessellationThresholds m_thresholds;
 
@@ -85,4 +102,10 @@ private:
 
     // Hysteresis factor to prevent thrashing
     float m_hysteresisFactor{0.2f};
+
+    // Loaded file path (for Poisson solving)
+    std::string m_loadedFilePath;
+
+    // Flag indicating if BVP data is available
+    bool m_hasBVPData{false};
 };

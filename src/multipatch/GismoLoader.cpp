@@ -1,4 +1,5 @@
 #include "GismoLoader.h"
+#include "async/PoissonTask.h"
 #include <iostream>
 #include <algorithm>
 
@@ -218,5 +219,108 @@ MeshData GismoLoader::tessellatePatch(const gismo::gsGeometry<double>& patch,
 MeshData GismoLoader::tessellatePatch(const gismo::gsGeometry<double>& /*patch*/,
                                        int /*uSamples*/, int /*vSamples*/) {
     return MeshData();
+}
+#endif
+
+#ifdef GISMO_AVAILABLE
+MeshData GismoLoader::tessellatePatchWithSolution(const gismo::gsGeometry<double>& patch,
+                                                   int uSamples, int vSamples,
+                                                   const PoissonSolution* solution,
+                                                   int patchIndex) {
+    MeshData data;
+
+    // Get parameter domain
+    gismo::gsMatrix<> support = patch.support();
+    gismo::gsVector<> lower(2), upper(2);
+    lower << support(0, 0), support(1, 0);
+    upper << support(0, 1), support(1, 1);
+
+    // Generate uniform parameter grid
+    gismo::gsVector<unsigned> numPts(2);
+    numPts << uSamples, vSamples;
+    gismo::gsMatrix<> uv = gismo::gsPointGrid(lower, upper, numPts);
+
+    // Evaluate positions at grid points
+    gismo::gsMatrix<> positions = patch.eval(uv);
+
+    // Check geometry dimension
+    int geoDim = patch.geoDim();
+    int parDim = patch.parDim();
+
+    // Evaluate derivatives for normal computation
+    gismo::gsMatrix<> derivs;
+    bool hasDerivatives = (parDim == 2 && geoDim == 3);
+    if (hasDerivatives) {
+        derivs = patch.deriv(uv);
+    }
+
+    // Build vertices
+    data.vertices.reserve(uv.cols());
+    for (int i = 0; i < uv.cols(); ++i) {
+        Vertex v;
+
+        // Position
+        if (geoDim >= 3) {
+            v.position = glm::vec3(positions(0, i), positions(1, i), positions(2, i));
+        } else if (geoDim == 2) {
+            v.position = glm::vec3(positions(0, i), positions(1, i), 0.0f);
+        } else {
+            v.position = glm::vec3(positions(0, i), 0.0f, 0.0f);
+        }
+
+        // Texture coordinates from parameters
+        v.texCoord = glm::vec2(
+            (uv(0, i) - lower(0)) / (upper(0) - lower(0)),
+            (uv(1, i) - lower(1)) / (upper(1) - lower(1))
+        );
+
+        // Normal from cross product of partial derivatives
+        if (hasDerivatives) {
+            glm::vec3 dPdu(derivs(0, i), derivs(2, i), derivs(4, i));
+            glm::vec3 dPdv(derivs(1, i), derivs(3, i), derivs(5, i));
+            glm::vec3 normal = glm::cross(dPdu, dPdv);
+            float len = glm::length(normal);
+            if (len > 1e-10f) {
+                v.normal = normal / len;
+            } else {
+                v.normal = glm::vec3(0.0f, 0.0f, 1.0f);
+            }
+        } else {
+            v.normal = glm::vec3(0.0f, 0.0f, 1.0f);
+        }
+
+        // Evaluate solution value at this point
+        if (solution && solution->valid) {
+            v.solutionValue = solution->evaluateAt(patch, uv(0, i), uv(1, i), patchIndex);
+        } else {
+            v.solutionValue = 0.0f;
+        }
+
+        data.vertices.push_back(v);
+    }
+
+    // Build triangle indices (structured grid topology)
+    data.indices.reserve((uSamples - 1) * (vSamples - 1) * 6);
+    for (int j = 0; j < vSamples - 1; ++j) {
+        for (int i = 0; i < uSamples - 1; ++i) {
+            uint32_t idx00 = j * uSamples + i;
+            uint32_t idx10 = idx00 + 1;
+            uint32_t idx01 = idx00 + uSamples;
+            uint32_t idx11 = idx01 + 1;
+
+            // First triangle
+            data.indices.push_back(idx00);
+            data.indices.push_back(idx10);
+            data.indices.push_back(idx11);
+
+            // Second triangle
+            data.indices.push_back(idx11);
+            data.indices.push_back(idx01);
+            data.indices.push_back(idx00);
+        }
+    }
+
+    data.calculateBounds();
+    return data;
 }
 #endif

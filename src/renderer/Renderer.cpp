@@ -148,6 +148,17 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     m_meshShader->setFloat("rimStrength", m_rimLight.strength);
     m_meshShader->setVec3("rimColor", m_rimLight.color);
 
+    // Solution visualization
+    bool showSol = m_showSolution && m_multipatchManager && m_multipatchManager->hasSolution();
+    m_meshShader->setBool("showSolution", showSol);
+    if (showSol) {
+        m_meshShader->setFloat("solutionMin", m_multipatchManager->getSolutionMin());
+        m_meshShader->setFloat("solutionMax", m_multipatchManager->getSolutionMax());
+    } else {
+        m_meshShader->setFloat("solutionMin", 0.0f);
+        m_meshShader->setFloat("solutionMax", 1.0f);
+    }
+
     m_visibleObjects = 0;
     m_culledObjects = 0;
     m_renderedTriangles = 0;
@@ -259,6 +270,10 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     toggles.lodEnabled = m_lodEnabled;
     toggles.lodDebugColors = m_lodDebugColors;
     toggles.texturesEnabled = m_texturesEnabled;
+    toggles.solutionVisualization = m_showSolution;
+    toggles.hasSolution = m_multipatchManager && m_multipatchManager->hasSolution();
+    toggles.isSolvingPoisson = m_multipatchManager && m_multipatchManager->isSolvingPoisson();
+    toggles.canSolvePoisson = m_multipatchManager && m_multipatchManager->canSolvePoisson();
     toggles.renderedTriangles = m_renderedTriangles;
     toggles.originalTriangles = m_originalTriangles;
     toggles.lodSavingsPercent = getLODSavingsPercent();

@@ -6,6 +6,7 @@
 class SubdivisionManager;
 class LODManager;
 class MultiPatchManager;
+class PoissonManager;
 
 class ProgressOverlay {
 public:

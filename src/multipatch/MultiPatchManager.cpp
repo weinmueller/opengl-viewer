@@ -1,6 +1,7 @@
 #include "MultiPatchManager.h"
 #include "GismoLoader.h"
 #include "async/TessellationTask.h"
+#include "async/PoissonTask.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <algorithm>
@@ -12,8 +13,17 @@ bool MultiPatchManager::load(const std::string& path, Scene& scene, int initialT
 #ifdef GISMO_AVAILABLE
     std::cout << "MultiPatchManager: Loading " << path << std::endl;
 
+    // Store file path for Poisson solving
+    m_loadedFilePath = path;
+
     // Load the file using G+Smo
     gismo::gsFileData<> fileData(path);
+
+    // Check for BVP data (source function indicates Poisson problem)
+    m_hasBVPData = fileData.has<gismo::gsFunctionExpr<>>();
+    if (m_hasBVPData) {
+        std::cout << "  BVP data detected - press P to solve Poisson equation" << std::endl;
+    }
 
     // Try to get as multipatch
     if (fileData.has<gismo::gsMultiPatch<>>()) {
@@ -154,6 +164,68 @@ void MultiPatchManager::updateTessellation(const Camera& camera, float aspectRat
 
 void MultiPatchManager::processCompletedTasks() {
     m_tessManager.processCompletedTasks();
+
+    // Check for completed Poisson solving
+    int poissonCompleted = m_poissonManager.processCompletedTasks();
+    if (poissonCompleted > 0 && m_poissonManager.hasSolution()) {
+        // Re-tessellate all patches with solution values
+        retessellateWithSolution();
+    }
+}
+
+void MultiPatchManager::startPoissonSolving() {
+#ifdef GISMO_AVAILABLE
+    if (!m_hasBVPData || !m_multipatch) {
+        std::cerr << "MultiPatchManager: Cannot solve Poisson - no BVP data available" << std::endl;
+        return;
+    }
+
+    if (m_poissonManager.isBusy()) {
+        std::cerr << "MultiPatchManager: Poisson solver already running" << std::endl;
+        return;
+    }
+
+    std::cout << "MultiPatchManager: Starting Poisson solver" << std::endl;
+
+    // Extract filename for display
+    std::string name = m_loadedFilePath;
+    size_t lastSlash = m_loadedFilePath.find_last_of("/\\");
+    if (lastSlash != std::string::npos) {
+        name = m_loadedFilePath.substr(lastSlash + 1);
+    }
+
+    m_poissonManager.startSolving(m_loadedFilePath, name, m_multipatch.get());
+#else
+    std::cerr << "MultiPatchManager: G+Smo support not available" << std::endl;
+#endif
+}
+
+void MultiPatchManager::retessellateWithSolution() {
+#ifdef GISMO_AVAILABLE
+    if (!m_poissonManager.hasSolution() || !m_multipatch) {
+        return;
+    }
+
+    std::cout << "MultiPatchManager: Re-tessellating patches with solution values" << std::endl;
+
+    const PoissonSolution& solution = m_poissonManager.getSolution();
+
+    for (PatchObject* patch : m_patchObjects) {
+        if (!patch) continue;
+
+        int patchIndex = patch->getPatchIndex();
+        int level = patch->getTessellationLevel();
+
+        // Tessellate with solution values
+        MeshData meshData = GismoLoader::tessellatePatchWithSolution(
+            m_multipatch->patch(patchIndex), level, level, &solution, patchIndex);
+
+        // Apply the new mesh data
+        patch->setMeshData(meshData);
+    }
+
+    std::cout << "MultiPatchManager: Re-tessellation complete" << std::endl;
+#endif
 }
 
 int MultiPatchManager::calculateTessLevel(float screenSize) const {

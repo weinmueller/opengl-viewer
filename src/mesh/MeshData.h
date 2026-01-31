@@ -8,6 +8,7 @@ struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec2 texCoord;
+    float solutionValue{0.0f};  // Poisson solution field value
 };
 
 struct MeshData {

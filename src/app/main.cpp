@@ -25,6 +25,7 @@ void printUsage(const char* progName) {
               << "  C                  Toggle back-face culling\n"
               << "  F                  Focus on scene\n"
               << "  H                  Toggle help overlay\n"
+              << "  P                  Solve Poisson / Toggle solution view\n"
               << "  ESC                Exit\n";
 }
 

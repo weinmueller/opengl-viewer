@@ -9,10 +9,10 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
     // Help content with toggle indicators
     struct HelpLine {
         std::string text;
-        int toggleType;  // 0=none, 1=wireframe, 2=backface, 3=frustum, 4=lod, 5=lodDebug, 6=textures
+        int toggleType;  // 0=none, 1=wireframe, 2=backface, 3=frustum, 4=lod, 5=lodDebug, 6=textures, 7=solution
     };
 
-    const std::vector<HelpLine> helpLines = {
+    std::vector<HelpLine> helpLines = {
         {"=== KEYBOARD ===", 0},
         {"H      Help toggle", 0},
         {"W      Wireframe", 1},
@@ -26,13 +26,25 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
         {"D      Subdivide (midpoint)", 0},
         {"Arrows Orbit camera", 0},
         {"ESC    Cancel/Exit", 0},
-        {"", 0},
-        {"=== MOUSE ===", 0},
-        {"Left   Orbit", 0},
-        {"Middle Pan", 0},
-        {"Right  Select", 0},
-        {"Scroll Zoom", 0},
     };
+
+    // Add Poisson key if BVP data is available
+    if (toggles.canSolvePoisson || toggles.hasSolution) {
+        if (toggles.isSolvingPoisson) {
+            helpLines.push_back({"P      Solving...", 0});
+        } else if (toggles.hasSolution) {
+            helpLines.push_back({"P      Solution view", 7});
+        } else {
+            helpLines.push_back({"P      Solve Poisson", 0});
+        }
+    }
+
+    helpLines.push_back({"", 0});
+    helpLines.push_back({"=== MOUSE ===", 0});
+    helpLines.push_back({"Left   Orbit", 0});
+    helpLines.push_back({"Middle Pan", 0});
+    helpLines.push_back({"Right  Select", 0});
+    helpLines.push_back({"Scroll Zoom", 0});
 
     const float scale = 1.5f;
     const float charW = TextRenderer::getCharWidth() * scale;
@@ -82,6 +94,7 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
             else if (line.toggleType == 4) isActive = toggles.lodEnabled;
             else if (line.toggleType == 5) isActive = toggles.lodDebugColors;
             else if (line.toggleType == 6) isActive = toggles.texturesEnabled;
+            else if (line.toggleType == 7) isActive = toggles.solutionVisualization;
 
             // Set color based on state
             glm::vec4 color;

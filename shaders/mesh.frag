@@ -3,6 +3,7 @@
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoord;
+in float SolutionValue;
 
 out vec4 FragColor;
 
@@ -22,13 +23,41 @@ uniform vec3 rimColor;
 uniform sampler2D diffuseMap;
 uniform bool hasTexture;
 
+// Solution visualization uniforms
+uniform bool showSolution;
+uniform float solutionMin;
+uniform float solutionMax;
+
+// Blue-white-red colormap for solution visualization
+vec3 solutionColormap(float value) {
+    float t = clamp((value - solutionMin) / (solutionMax - solutionMin), 0.0, 1.0);
+
+    // Blue at t=0, white at t=0.5, red at t=1
+    vec3 blue = vec3(0.2, 0.4, 1.0);
+    vec3 white = vec3(1.0, 1.0, 1.0);
+    vec3 red = vec3(1.0, 0.3, 0.2);
+
+    if (t < 0.5) {
+        return mix(blue, white, t * 2.0);
+    } else {
+        return mix(white, red, (t - 0.5) * 2.0);
+    }
+}
+
 void main() {
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(-light.direction);
     vec3 viewDir = normalize(viewPos - FragPos);
 
-    // Get base color from texture or object color
-    vec3 baseColor = hasTexture ? texture(diffuseMap, TexCoord).rgb : objectColor;
+    // Get base color based on mode
+    vec3 baseColor;
+    if (showSolution) {
+        baseColor = solutionColormap(SolutionValue);
+    } else if (hasTexture) {
+        baseColor = texture(diffuseMap, TexCoord).rgb;
+    } else {
+        baseColor = objectColor;
+    }
 
     // Ambient
     vec3 ambient = light.ambient * light.color;
