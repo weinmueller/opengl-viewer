@@ -69,6 +69,10 @@ public:
     PoissonManager* getPoissonManager() { return &m_poissonManager; }
     const PoissonManager* getPoissonManager() const { return &m_poissonManager; }
 
+    // Check if solution just became ready (for auto-enabling visualization)
+    bool isSolutionReady() const { return m_solutionReady; }
+    void clearSolutionReady() { m_solutionReady = false; }
+
     // Re-tessellate all patches with solution values
     void retessellateWithSolution();
 
@@ -97,8 +101,8 @@ private:
     // Tessellation thresholds
     TessellationThresholds m_thresholds;
 
-    // Auto refinement flag
-    bool m_autoRefinement{true};
+    // Auto refinement flag (disabled by default for cleaner initial display)
+    bool m_autoRefinement{false};
 
     // Hysteresis factor to prevent thrashing
     float m_hysteresisFactor{0.2f};
@@ -108,4 +112,7 @@ private:
 
     // Flag indicating if BVP data is available
     bool m_hasBVPData{false};
+
+    // Flag indicating solution just became ready
+    bool m_solutionReady{false};
 };

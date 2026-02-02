@@ -27,30 +27,39 @@ void PoissonManager::processTask(PoissonTask& task) {
 
     gismo::gsFileData<> fileData(task.filePath);
 
-    // Check for required BVP components
-    if (!fileData.has<gismo::gsFunctionExpr<>>()) {
+    // Load source function (id=1 in standard BVP files)
+    gismo::gsFunctionExpr<> f;
+    if (fileData.hasId(1)) {
+        fileData.getId(1, f);
+    } else if (fileData.has<gismo::gsFunctionExpr<>>()) {
+        fileData.getFirst(f);
+    } else {
         std::cerr << "PoissonManager: No source function found in file" << std::endl;
         progress.setError();
         return;
     }
+    std::cout << "PoissonManager: Source function: " << f << std::endl;
 
-    // Try to load source function
-    gismo::gsFunctionExpr<> f;
-    fileData.getFirst(f);
-
-    // Try to load boundary conditions
+    // Load boundary conditions (id=2 in standard BVP files)
     gismo::gsBoundaryConditions<> bc;
-    if (fileData.has<gismo::gsBoundaryConditions<>>()) {
+    if (fileData.hasId(2)) {
+        fileData.getId(2, bc);
+    } else if (fileData.has<gismo::gsBoundaryConditions<>>()) {
         fileData.getFirst(bc);
     } else {
         // Set up default homogeneous Dirichlet BCs on all boundaries
+        std::cout << "PoissonManager: No BCs found, using homogeneous Dirichlet" << std::endl;
         for (size_t p = 0; p < task.multipatch->nPatches(); ++p) {
-            for (int s = 1; s <= 4; ++s) {  // All 4 sides of each patch
+            for (int s = 1; s <= 4; ++s) {
                 gismo::patchSide ps(p, s);
                 bc.addCondition(ps, gismo::condition_type::dirichlet, nullptr);
             }
         }
     }
+
+    // Link boundary conditions to the geometry
+    bc.setGeoMap(*task.multipatch);
+    std::cout << "PoissonManager: Boundary conditions:\n" << bc << std::endl;
 
     progress.updatePhaseProgress(1.0f);
     if (progress.isCancelled()) return;
@@ -59,14 +68,19 @@ void PoissonManager::processTask(PoissonTask& task) {
     progress.setPhase(2);
     std::cout << "PoissonManager: Setting up basis functions" << std::endl;
 
-    // Create basis from the multipatch geometry
-    gismo::gsMultiBasis<> basis(*task.multipatch);
+    // Create basis from the multipatch geometry (true = use poly-splines, not NURBS)
+    gismo::gsMultiBasis<> basis(*task.multipatch, true);
 
-    // Refine the basis for better accuracy
-    basis.uniformRefine();
+    // Refine the basis multiple times for better accuracy
+    const int numRefinements = 5;  // More refinements = more DOFs
+    for (int i = 0; i < numRefinements; ++i) {
+        basis.uniformRefine();
+        if (progress.isCancelled()) return;
+        progress.updatePhaseProgress(static_cast<float>(i + 1) / numRefinements);
+    }
 
-    progress.updatePhaseProgress(1.0f);
-    if (progress.isCancelled()) return;
+    std::cout << "PoissonManager: Basis has " << basis.totalSize() << " DOFs after "
+              << numRefinements << " refinements" << std::endl;
 
     // Phase 3: Assembling system
     progress.setPhase(3);
@@ -74,7 +88,16 @@ void PoissonManager::processTask(PoissonTask& task) {
 
     // Create Poisson assembler
     gismo::gsPoissonAssembler<> assembler(*task.multipatch, basis, bc, f);
+
+    // Load assembler options from file if available (id=4)
+    if (fileData.hasId(4)) {
+        gismo::gsOptionList opts;
+        fileData.getId(4, opts);
+        assembler.options().update(opts, gismo::gsOptionList::addIfUnknown);
+    }
     assembler.options().setInt("DirichletStrategy", gismo::dirichlet::elimination);
+
+    std::cout << "PoissonManager: Assembler options:\n" << assembler.options() << std::endl;
 
     assembler.assemble();
 

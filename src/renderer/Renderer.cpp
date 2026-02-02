@@ -152,8 +152,10 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     bool showSol = m_showSolution && m_multipatchManager && m_multipatchManager->hasSolution();
     m_meshShader->setBool("showSolution", showSol);
     if (showSol) {
-        m_meshShader->setFloat("solutionMin", m_multipatchManager->getSolutionMin());
-        m_meshShader->setFloat("solutionMax", m_multipatchManager->getSolutionMax());
+        float solMin = m_multipatchManager->getSolutionMin();
+        float solMax = m_multipatchManager->getSolutionMax();
+        m_meshShader->setFloat("solutionMin", solMin);
+        m_meshShader->setFloat("solutionMax", solMax);
     } else {
         m_meshShader->setFloat("solutionMin", 0.0f);
         m_meshShader->setFloat("solutionMax", 1.0f);
@@ -187,7 +189,8 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
 
         // Calculate screen size for LOD selection
         float screenSize = 10000.0f;  // Default to max detail
-        if (m_lodEnabled) {
+        bool useLOD = m_lodEnabled && !showSol;  // Disable LOD when showing solution
+        if (useLOD) {
             glm::vec3 worldCenter = obj->getWorldBounds().getCenter();
             float worldRadius = obj->getWorldBounds().getRadius();
             screenSize = LODSelector::calculateScreenSize(
@@ -196,7 +199,7 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
 
         // Get appropriate mesh (LOD or original)
         Mesh* meshToRender = nullptr;
-        if (m_lodEnabled && obj->hasLOD()) {
+        if (useLOD && obj->hasLOD()) {
             meshToRender = const_cast<SceneObject*>(obj.get())->getMeshForRendering(screenSize);
         } else {
             meshToRender = obj->getMesh();

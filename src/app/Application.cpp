@@ -103,6 +103,13 @@ void Application::update(float deltaTime) {
     // Process completed tessellation tasks for multipatch
     m_multipatchManager->processCompletedTasks();
 
+    // Auto-enable solution visualization when Poisson solving completes
+    if (m_multipatchManager->isSolutionReady()) {
+        m_multipatchManager->clearSolutionReady();
+        m_renderer->setSolutionVisualization(true);
+        std::cout << "Solution visualization enabled automatically" << std::endl;
+    }
+
     // Update multipatch tessellation based on view
     m_multipatchManager->updateTessellation(m_camera, m_window->getAspectRatio(),
                                             m_window->getWidth(), m_window->getHeight());
@@ -145,6 +152,7 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
                 m_renderer->toggleWireframe();
                 break;
             case GLFW_KEY_F:
+            case GLFW_KEY_SPACE:
                 focusOnScene();
                 break;
             case GLFW_KEY_S:
@@ -258,7 +266,7 @@ bool Application::loadMesh(const std::string& path) {
 
         if (ext == ".xml") {
             // Load as multipatch with view-dependent tessellation
-            return m_multipatchManager->load(path, m_scene, 16);
+            return m_multipatchManager->load(path, m_scene, 8);  // Start with coarse mesh
         }
     }
 

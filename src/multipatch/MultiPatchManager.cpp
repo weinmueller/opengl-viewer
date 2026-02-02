@@ -110,7 +110,9 @@ bool MultiPatchManager::load(const std::string& path, Scene& scene, int initialT
 
 void MultiPatchManager::updateTessellation(const Camera& camera, float aspectRatio,
                                            int viewportWidth, int viewportHeight) {
-    if (!m_autoRefinement || m_patchObjects.empty()) {
+    // Disable view-dependent tessellation when solution is displayed
+    // to keep solution values stable during rotation
+    if (!m_autoRefinement || m_patchObjects.empty() || m_poissonManager.hasSolution()) {
         return;
     }
 
@@ -146,12 +148,21 @@ void MultiPatchManager::updateTessellation(const Camera& camera, float aspectRat
             // Submit background tessellation task
             patch->setRetessellating(true);
 
-            // Create tessellation callback
+            // Create tessellation callback - use solution if available
 #ifdef GISMO_AVAILABLE
             int patchIndex = patch->getPatchIndex();
             gismo::gsGeometry<>* patchPtr = &m_multipatch->patch(patchIndex);
-            auto tessFunc = [patchPtr](int u, int v) -> MeshData {
-                return GismoLoader::tessellatePatch(*patchPtr, u, v);
+
+            // Capture solution pointer for use in tessellation
+            const PoissonSolution* solPtr = m_poissonManager.hasSolution() ?
+                &m_poissonManager.getSolution() : nullptr;
+
+            auto tessFunc = [patchPtr, solPtr, patchIndex](int u, int v) -> MeshData {
+                if (solPtr && solPtr->valid) {
+                    return GismoLoader::tessellatePatchWithSolution(*patchPtr, u, v, solPtr, patchIndex);
+                } else {
+                    return GismoLoader::tessellatePatch(*patchPtr, u, v);
+                }
             };
 
             auto task = std::make_unique<TessellationTask>(
@@ -170,6 +181,8 @@ void MultiPatchManager::processCompletedTasks() {
     if (poissonCompleted > 0 && m_poissonManager.hasSolution()) {
         // Re-tessellate all patches with solution values
         retessellateWithSolution();
+        // Signal that solution visualization should be enabled
+        m_solutionReady = true;
     }
 }
 
@@ -207,20 +220,40 @@ void MultiPatchManager::retessellateWithSolution() {
     }
 
     std::cout << "MultiPatchManager: Re-tessellating patches with solution values" << std::endl;
+    std::cout << "  Solution range: [" << m_poissonManager.getSolutionMin()
+              << ", " << m_poissonManager.getSolutionMax() << "]" << std::endl;
 
     const PoissonSolution& solution = m_poissonManager.getSolution();
+
+    // Use high resolution for solution display
+    const int solutionTessLevel = 64;
 
     for (PatchObject* patch : m_patchObjects) {
         if (!patch) continue;
 
         int patchIndex = patch->getPatchIndex();
-        int level = patch->getTessellationLevel();
+
+        // Use higher tessellation for solution visualization
+        int level = std::max(patch->getTessellationLevel(), solutionTessLevel);
 
         // Tessellate with solution values
         MeshData meshData = GismoLoader::tessellatePatchWithSolution(
             m_multipatch->patch(patchIndex), level, level, &solution, patchIndex);
 
-        // Apply the new mesh data
+        // Debug: print some solution values
+        if (!meshData.vertices.empty()) {
+            float minSol = meshData.vertices[0].solutionValue;
+            float maxSol = meshData.vertices[0].solutionValue;
+            for (const auto& v : meshData.vertices) {
+                minSol = std::min(minSol, v.solutionValue);
+                maxSol = std::max(maxSol, v.solutionValue);
+            }
+            std::cout << "  Patch " << patchIndex << ": level " << level
+                      << ", vertex solution range [" << minSol << ", " << maxSol << "]" << std::endl;
+        }
+
+        // Update tessellation level and apply mesh data
+        patch->setTessellationLevel(level);
         patch->setMeshData(meshData);
     }
 
