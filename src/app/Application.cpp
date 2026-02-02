@@ -107,7 +107,6 @@ void Application::update(float deltaTime) {
     if (m_multipatchManager->isSolutionReady()) {
         m_multipatchManager->clearSolutionReady();
         m_renderer->setSolutionVisualization(true);
-        std::cout << "Solution visualization enabled automatically" << std::endl;
     }
 
     // Update multipatch tessellation based on view

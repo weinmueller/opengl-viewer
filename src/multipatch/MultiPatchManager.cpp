@@ -110,9 +110,8 @@ bool MultiPatchManager::load(const std::string& path, Scene& scene, int initialT
 
 void MultiPatchManager::updateTessellation(const Camera& camera, float aspectRatio,
                                            int viewportWidth, int viewportHeight) {
-    // Disable view-dependent tessellation when solution is displayed
-    // to keep solution values stable during rotation
-    if (!m_autoRefinement || m_patchObjects.empty() || m_poissonManager.hasSolution()) {
+    // Skip if auto-refinement is disabled or no patches
+    if (!m_autoRefinement || m_patchObjects.empty()) {
         return;
     }
 
@@ -198,8 +197,6 @@ void MultiPatchManager::startPoissonSolving() {
         return;
     }
 
-    std::cout << "MultiPatchManager: Starting Poisson solver" << std::endl;
-
     // Extract filename for display
     std::string name = m_loadedFilePath;
     size_t lastSlash = m_loadedFilePath.find_last_of("/\\");
@@ -219,10 +216,6 @@ void MultiPatchManager::retessellateWithSolution() {
         return;
     }
 
-    std::cout << "MultiPatchManager: Re-tessellating patches with solution values" << std::endl;
-    std::cout << "  Solution range: [" << m_poissonManager.getSolutionMin()
-              << ", " << m_poissonManager.getSolutionMax() << "]" << std::endl;
-
     const PoissonSolution& solution = m_poissonManager.getSolution();
 
     // Use high resolution for solution display
@@ -240,24 +233,10 @@ void MultiPatchManager::retessellateWithSolution() {
         MeshData meshData = GismoLoader::tessellatePatchWithSolution(
             m_multipatch->patch(patchIndex), level, level, &solution, patchIndex);
 
-        // Debug: print some solution values
-        if (!meshData.vertices.empty()) {
-            float minSol = meshData.vertices[0].solutionValue;
-            float maxSol = meshData.vertices[0].solutionValue;
-            for (const auto& v : meshData.vertices) {
-                minSol = std::min(minSol, v.solutionValue);
-                maxSol = std::max(maxSol, v.solutionValue);
-            }
-            std::cout << "  Patch " << patchIndex << ": level " << level
-                      << ", vertex solution range [" << minSol << ", " << maxSol << "]" << std::endl;
-        }
-
         // Update tessellation level and apply mesh data
         patch->setTessellationLevel(level);
         patch->setMeshData(meshData);
     }
-
-    std::cout << "MultiPatchManager: Re-tessellation complete" << std::endl;
 #endif
 }
 

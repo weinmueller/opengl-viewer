@@ -46,8 +46,15 @@ vec3 solutionColormap(float value) {
 
 void main() {
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(-light.direction);
     vec3 viewDir = normalize(viewPos - FragPos);
+
+    // Two-sided lighting: flip normal if facing away from viewer
+    // This makes flat surfaces (like 2D patches) look correct from both sides
+    if (dot(norm, viewDir) < 0.0) {
+        norm = -norm;
+    }
+
+    vec3 lightDir = normalize(-light.direction);
 
     // Get base color based on mode
     vec3 baseColor;

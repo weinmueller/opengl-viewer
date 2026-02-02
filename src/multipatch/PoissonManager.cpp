@@ -23,7 +23,6 @@ void PoissonManager::processTask(PoissonTask& task) {
 
     // Phase 1: Loading BVP data
     progress.setPhase(1);
-    std::cout << "PoissonManager: Loading BVP data from " << task.filePath << std::endl;
 
     gismo::gsFileData<> fileData(task.filePath);
 
@@ -38,8 +37,6 @@ void PoissonManager::processTask(PoissonTask& task) {
         progress.setError();
         return;
     }
-    std::cout << "PoissonManager: Source function: " << f << std::endl;
-
     // Load boundary conditions (id=2 in standard BVP files)
     gismo::gsBoundaryConditions<> bc;
     if (fileData.hasId(2)) {
@@ -48,7 +45,6 @@ void PoissonManager::processTask(PoissonTask& task) {
         fileData.getFirst(bc);
     } else {
         // Set up default homogeneous Dirichlet BCs on all boundaries
-        std::cout << "PoissonManager: No BCs found, using homogeneous Dirichlet" << std::endl;
         for (size_t p = 0; p < task.multipatch->nPatches(); ++p) {
             for (int s = 1; s <= 4; ++s) {
                 gismo::patchSide ps(p, s);
@@ -59,14 +55,12 @@ void PoissonManager::processTask(PoissonTask& task) {
 
     // Link boundary conditions to the geometry
     bc.setGeoMap(*task.multipatch);
-    std::cout << "PoissonManager: Boundary conditions:\n" << bc << std::endl;
 
     progress.updatePhaseProgress(1.0f);
     if (progress.isCancelled()) return;
 
     // Phase 2: Setting up basis
     progress.setPhase(2);
-    std::cout << "PoissonManager: Setting up basis functions" << std::endl;
 
     // Create basis from the multipatch geometry (true = use poly-splines, not NURBS)
     gismo::gsMultiBasis<> basis(*task.multipatch, true);
@@ -79,12 +73,8 @@ void PoissonManager::processTask(PoissonTask& task) {
         progress.updatePhaseProgress(static_cast<float>(i + 1) / numRefinements);
     }
 
-    std::cout << "PoissonManager: Basis has " << basis.totalSize() << " DOFs after "
-              << numRefinements << " refinements" << std::endl;
-
     // Phase 3: Assembling system
     progress.setPhase(3);
-    std::cout << "PoissonManager: Assembling linear system" << std::endl;
 
     // Create Poisson assembler
     gismo::gsPoissonAssembler<> assembler(*task.multipatch, basis, bc, f);
@@ -96,9 +86,6 @@ void PoissonManager::processTask(PoissonTask& task) {
         assembler.options().update(opts, gismo::gsOptionList::addIfUnknown);
     }
     assembler.options().setInt("DirichletStrategy", gismo::dirichlet::elimination);
-
-    std::cout << "PoissonManager: Assembler options:\n" << assembler.options() << std::endl;
-
     assembler.assemble();
 
     progress.updatePhaseProgress(1.0f);
@@ -106,8 +93,6 @@ void PoissonManager::processTask(PoissonTask& task) {
 
     // Phase 4: Solving linear system
     progress.setPhase(4);
-    std::cout << "PoissonManager: Solving linear system ("
-              << assembler.matrix().rows() << " DOFs)" << std::endl;
 
     // Solve using CG solver
     gismo::gsSparseSolver<>::CGDiagonal solver;
@@ -119,14 +104,10 @@ void PoissonManager::processTask(PoissonTask& task) {
 
     // Phase 5: Computing solution range
     progress.setPhase(5);
-    std::cout << "PoissonManager: Constructing solution field" << std::endl;
 
     // Construct the solution as a gsMultiPatch using the assembler
     task.result.solutionField = std::make_unique<gismo::gsMultiPatch<>>();
     assembler.constructSolution(solVector, *task.result.solutionField);
-
-    std::cout << "PoissonManager: Solution field has " << task.result.solutionField->nPatches()
-              << " patches" << std::endl;
 
     // Find min/max values by sampling the solution
     task.result.minValue = std::numeric_limits<float>::max();
@@ -162,9 +143,6 @@ void PoissonManager::processTask(PoissonTask& task) {
         task.result.maxValue += 0.5f;
     }
 
-    std::cout << "PoissonManager: Solution range [" << task.result.minValue
-              << ", " << task.result.maxValue << "]" << std::endl;
-
     task.result.valid = true;
     progress.complete();
 #else
@@ -181,7 +159,5 @@ bool PoissonManager::applyTaskResult(PoissonTask& task) {
 
     // Move the solution to our storage
     m_solution = std::move(task.result);
-
-    std::cout << "PoissonManager: Solution applied successfully" << std::endl;
     return true;
 }
