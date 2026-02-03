@@ -31,6 +31,10 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - **Renderer** (`src/renderer/Renderer.h`) - Main render loop with Blinn-Phong lighting
 - **Camera** (`src/renderer/Camera.h`) - Orbit camera with pan/zoom
 
+### Animation (`src/animation/`)
+- **CameraKeyframe** (`src/animation/CameraKeyframe.h`) - Keyframe struct with lerp
+- **CameraAnimation** (`src/animation/CameraAnimation.h`) - JSON-based camera animation with pingpong looping
+
 ### Scene Management (`src/scene/`)
 - **Scene** (`src/scene/Scene.h`) - Collection of scene objects
 - **SceneObject** (`src/scene/SceneObject.h`) - Renderable object with transform
@@ -73,6 +77,7 @@ High-performance OpenGL 4.6 viewer designed for large, complex CAD meshes. Built
 - GLM (math)
 - tinyobjloader (OBJ parsing)
 - stb_image (texture loading - PNG, JPG, TGA, BMP)
+- nlohmann/json (JSON parsing for animations)
 - G+Smo (optional, multipatch NURBS/B-spline geometry)
 
 ## Build Commands
@@ -100,6 +105,9 @@ cd build && cmake .. && make
 cmake -DWITH_GISMO=OFF ..             # Disable G+Smo support
 cmake -DGISMO_ROOT=/path/to/gismo ..  # Specify G+Smo location
 # Or set environment: export GISMO_ROOT=/path/to/gismo
+
+# Load with camera animation (drone flythrough over 10x10 cube grid)
+./MeshViewer -a assets/animations/drone_flythrough.json assets/meshes/cube_{1..100}.obj
 ```
 
 ## Current Features
@@ -140,6 +148,10 @@ cmake -DGISMO_ROOT=/path/to/gismo ..  # Specify G+Smo location
 - Per-patch screen-space size calculation with hysteresis to prevent thrashing
 - **Poisson BVP solving** - Press P to solve Poisson equation on BVP files (background processing)
 - **Solution field visualization** - Blue-white-red colormap for solution values (toggle with P key)
+- **Camera animation** - Load keyframe animations from JSON files (`-a` flag)
+- Smooth cubic ease-in-out interpolation between keyframes
+- Pingpong looping (forward then backward continuously)
+- Toggle animation with A key, stop with ESC
 
 ## Future Improvements
 
@@ -165,8 +177,8 @@ cmake -DGISMO_ROOT=/path/to/gismo ..  # Specify G+Smo location
 - [x] G+Smo multipatch support with view-dependent tessellation
 - [x] Material support (MTL files) - diffuse texture path extraction
 - [x] Texture mapping - diffuse textures with mipmapping
+- [x] Camera animation/keyframes (JSON file, pingpong looping, cubic easing)
 - [ ] Screenshot export (PNG)
-- [ ] Camera animation/keyframes
 - [ ] Measurement tools
 - [ ] Section planes/clipping
 
@@ -188,6 +200,7 @@ cmake -DGISMO_ROOT=/path/to/gismo ..  # Specify G+Smo location
 - Add new patch types: Extend `PatchObject` or add new geometry evaluation in `GismoLoader::tessellatePatch()`
 - Add new textures: Place PNG/JPG files in `assets/textures/`, use via `--texture filename`
 - Modify Poisson solver: Edit `PoissonManager::processTask()` for solver settings, `mesh.frag` for colormap
+- Add camera animations: Create JSON files in `assets/animations/`, load with `-a` flag
 
 ## Design Patterns
 
@@ -230,3 +243,28 @@ TessellationThresholds thresholds;
 thresholds.minLevel = 4;      // Below 20px screen size
 thresholds.maxLevel = 128;    // Above 500px screen size
 ```
+
+### Camera Animation
+Animation files are JSON with keyframes specifying camera parameters:
+```json
+{
+    "name": "My Animation",
+    "keyframes": [
+        { "time": 0.0, "target": [0, 0, 0], "distance": 5.0, "yaw": 0, "pitch": 30, "fov": 45 },
+        { "time": 2.0, "target": [1, 0, 1], "distance": 4.0, "yaw": 45, "pitch": 20, "fov": 50 }
+    ]
+}
+```
+
+- **time**: Keyframe time in seconds
+- **target**: Camera look-at point [x, y, z]
+- **distance**: Distance from target
+- **yaw/pitch**: Camera rotation in degrees
+- **fov**: Field of view in degrees
+
+Interpolation uses cubic ease-in-out for smooth transitions. Animation loops in pingpong mode (forward then backward).
+
+Example animations in `assets/animations/`:
+- `drone_flythrough.json` - Drone-style swooping flight through the 10x10 cube grid (30s)
+- `cube_grid_flythrough.json` - Serpentine path weaving through the cube grid (38s)
+- `flythrough.json` - Simple 5-keyframe demo animation (8s)

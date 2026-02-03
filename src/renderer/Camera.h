@@ -25,6 +25,13 @@ public:
     void setPanSensitivity(float sensitivity) { m_panSensitivity = sensitivity; }
     void setZoomSensitivity(float sensitivity) { m_zoomSensitivity = sensitivity; }
 
+    // Animation control
+    void setYawPitch(float yaw, float pitch);
+    float getYaw() const { return m_yaw; }
+    float getPitch() const { return m_pitch; }
+    float getDistance() const { return m_distance; }
+    float getFOV() const { return m_fov; }
+
 private:
     void updateViewMatrix();
 

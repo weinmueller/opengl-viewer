@@ -16,6 +16,9 @@ struct ToggleStates {
     bool hasSolution{false};
     bool isSolvingPoisson{false};
     bool canSolvePoisson{false};
+    // Animation state
+    bool animationPlaying{false};
+    bool animationLoaded{false};
     // Triangle stats
     uint32_t renderedTriangles{0};
     uint32_t originalTriangles{0};

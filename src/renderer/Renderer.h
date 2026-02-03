@@ -82,6 +82,9 @@ public:
     bool isSolutionVisualization() const { return m_showSolution; }
     void toggleSolutionVisualization() { m_showSolution = !m_showSolution; }
 
+    // Animation state for help overlay
+    void setAnimationState(bool playing, bool loaded) { m_animationPlaying = playing; m_animationLoaded = loaded; }
+
     // Triangle stats for LOD display
     uint32_t getRenderedTriangles() const { return m_renderedTriangles; }
     uint32_t getOriginalTriangles() const { return m_originalTriangles; }
@@ -156,6 +159,8 @@ private:
     bool m_lodDebugColors{false};
     bool m_texturesEnabled{true};
     bool m_showSolution{false};
+    bool m_animationPlaying{false};
+    bool m_animationLoaded{false};
 
     // Triangle count stats
     uint32_t m_renderedTriangles{0};

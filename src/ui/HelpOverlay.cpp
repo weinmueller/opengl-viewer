@@ -39,6 +39,11 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
         }
     }
 
+    // Add animation key if animation is loaded
+    if (toggles.animationLoaded) {
+        helpLines.push_back({"A      Animation", 8});
+    }
+
     helpLines.push_back({"", 0});
     helpLines.push_back({"=== MOUSE ===", 0});
     helpLines.push_back({"Left   Orbit", 0});
@@ -95,6 +100,7 @@ void HelpOverlay::render(int screenWidth, int screenHeight, const ToggleStates& 
             else if (line.toggleType == 5) isActive = toggles.lodDebugColors;
             else if (line.toggleType == 6) isActive = toggles.texturesEnabled;
             else if (line.toggleType == 7) isActive = toggles.solutionVisualization;
+            else if (line.toggleType == 8) isActive = toggles.animationPlaying;
 
             // Set color based on state
             glm::vec4 color;

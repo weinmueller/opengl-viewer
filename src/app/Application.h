@@ -9,6 +9,7 @@
 #include "geometry/SubdivisionManager.h"
 #include "lod/LODManager.h"
 #include "multipatch/MultiPatchManager.h"
+#include "animation/CameraAnimation.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -21,6 +22,7 @@ public:
     ~Application() = default;
 
     int run(const std::vector<std::string>& meshPaths = {});
+    bool loadAnimation(const std::string& path);
 
 private:
     void setupCallbacks();
@@ -56,4 +58,6 @@ private:
 
     float m_creaseAngle{180.0f};
     std::string m_defaultTexturePath;
+
+    CameraAnimation m_cameraAnimation;
 };

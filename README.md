@@ -30,6 +30,7 @@ A high-performance OpenGL 4.6 viewer designed for visualizing large CAD models. 
 - **LOD Debug Colors** - Visualize LOD levels with color coding (K key)
 - **G+Smo Multipatch Support** - Load NURBS/B-spline multipatch geometries from XML files
 - **View-Dependent Tessellation** - Automatic refinement of patches based on screen-space size (4→128 samples)
+- **Camera Animation** - JSON-based keyframe animations with cubic easing and pingpong looping
 
 ## Screenshots
 
@@ -107,6 +108,9 @@ make
 # Load G+Smo multipatch geometry (requires G+Smo)
 ./MeshViewer assets/gismo/teapot.xml
 
+# Load with camera animation
+./MeshViewer -a assets/animations/drone_flythrough.json assets/meshes/cube_{1..100}.obj
+
 # Show help
 ./MeshViewer --help
 ```
@@ -117,6 +121,7 @@ make
 |--------|-------------|
 | `--angle <degrees>` | Crease angle threshold for subdivision (default: 180). Edges with dihedral angle greater than this are kept sharp. Use lower values (e.g., 30) to preserve sharp edges on cubes, etc. |
 | `--texture <path>` | Default texture for all objects. Can be a full path or built-in name: `default_grid`, `checker`, `uv_test`, `brushed_metal`, `wood`, `concrete` |
+| `--animation <file>` | Load camera animation from JSON file. Use `-a` as shorthand. |
 | `--help` | Show help message |
 
 ### Controls
@@ -128,6 +133,7 @@ make
 | Right Click | Select object (click background to deselect) |
 | Scroll Wheel | Zoom in/out |
 | Arrow Keys | Orbit camera |
+| A | Toggle camera animation playback |
 | S | Subdivide mesh (Loop - smooth) |
 | D | Subdivide mesh (midpoint - keeps shape) |
 | W | Toggle wireframe |
@@ -138,7 +144,7 @@ make
 | K | Toggle LOD debug colors |
 | F | Focus on scene |
 | H | Show help overlay (keyboard shortcuts) |
-| ESC | Cancel active subdivision/LOD generation / Exit |
+| ESC | Stop animation / Cancel subdivision / Exit |
 
 Mesh statistics (vertices, triangles) are printed to the terminal after loading and subdivision.
 
@@ -158,6 +164,7 @@ OpenGL/
 │   │   ├── SubdivisionTask.h # Subdivision task data
 │   │   ├── LODTask.h         # LOD generation task data
 │   │   └── TessellationTask.h # Tessellation task data
+│   ├── animation/            # Camera animation system
 │   ├── renderer/             # Camera, Renderer
 │   ├── scene/                # Scene graph, Objects
 │   ├── mesh/                 # Mesh loading and GPU resources
@@ -177,6 +184,7 @@ OpenGL/
 ├── assets/
 │   ├── meshes/               # Sample OBJ files
 │   ├── textures/             # Built-in textures (grid, checker, wood, etc.)
+│   ├── animations/           # Camera animation JSON files
 │   └── gismo/                # Sample G+Smo multipatch files
 └── external/                 # Third-party libraries (GLAD, GLM, tinyobjloader)
 ```
@@ -198,6 +206,7 @@ OpenGL/
 - [x] Code refactoring (TaskManager template, shared TextRenderer, unified Progress)
 - [x] G+Smo multipatch support with view-dependent tessellation
 - [x] Texture mapping with MTL support and built-in textures
+- [x] Camera animation with JSON keyframes and pingpong looping
 - [ ] GPU-based subdivision (compute shaders)
 
 ## Third-Party Libraries
@@ -207,6 +216,7 @@ OpenGL/
 - [GLM](https://github.com/g-truc/glm) - Mathematics library
 - [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) - OBJ file parsing
 - [stb_image](https://github.com/nothings/stb) - Image loading (PNG, JPG, TGA, BMP)
+- [nlohmann/json](https://github.com/nlohmann/json) - JSON parsing for animations
 - [OpenMP](https://www.openmp.org/) - Parallel processing
 - [G+Smo](https://github.com/gismo/gismo) - Geometry + Simulation Modules (optional, for multipatch support)
 

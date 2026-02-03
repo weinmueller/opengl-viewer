@@ -12,12 +12,14 @@ void printUsage(const char* progName) {
               << "                     Use lower values (e.g., 30) to preserve sharp edges\n"
               << "  --texture <path>   Default texture for all objects (default: assets/textures/default_grid.png)\n"
               << "                     Built-in options: default_grid, checker, uv_test, brushed_metal, wood, concrete\n"
+              << "  --animation <file> Load camera animation from JSON file\n"
               << "  --help             Show this help message\n"
               << "\nControls:\n"
               << "  Left Mouse Drag    Orbit camera\n"
               << "  Middle Mouse Drag  Pan camera\n"
               << "  Right Click        Select object\n"
               << "  Scroll Wheel       Zoom in/out\n"
+              << "  A                  Toggle animation playback\n"
               << "  S                  Subdivide (Loop - smooth)\n"
               << "  D                  Subdivide (midpoint)\n"
               << "  W                  Toggle wireframe\n"
@@ -26,16 +28,17 @@ void printUsage(const char* progName) {
               << "  F                  Focus on scene\n"
               << "  H                  Toggle help overlay\n"
               << "  P                  Solve Poisson / Toggle solution view\n"
-              << "  ESC                Exit\n";
+              << "  ESC                Stop animation / Cancel / Exit\n";
 }
 
 int main(int argc, char* argv[]) {
     std::vector<std::string> meshPaths;
     float creaseAngle = 180.0f;
     std::string texturePath = "assets/textures/default_grid.png";
+    std::string animationPath;
 
     for (int i = 1; i < argc; ++i) {
-        if (std::strcmp(argv[i], "--angle") == 0 || std::strcmp(argv[i], "-a") == 0) {
+        if (std::strcmp(argv[i], "--angle") == 0) {
             if (i + 1 < argc) {
                 creaseAngle = static_cast<float>(std::atof(argv[++i]));
             } else {
@@ -59,6 +62,13 @@ int main(int argc, char* argv[]) {
                 std::cerr << "Error: --texture requires a path\n";
                 return 1;
             }
+        } else if (std::strcmp(argv[i], "--animation") == 0 || std::strcmp(argv[i], "-a") == 0) {
+            if (i + 1 < argc) {
+                animationPath = argv[++i];
+            } else {
+                std::cerr << "Error: --animation requires a file path\n";
+                return 1;
+            }
         } else if (std::strcmp(argv[i], "--help") == 0 || std::strcmp(argv[i], "-h") == 0) {
             printUsage(argv[0]);
             return 0;
@@ -69,6 +79,11 @@ int main(int argc, char* argv[]) {
 
     try {
         Application app(1280, 720, "OpenGL Mesh Viewer", creaseAngle, texturePath);
+
+        if (!animationPath.empty()) {
+            app.loadAnimation(animationPath);
+        }
+
         return app.run(meshPaths);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

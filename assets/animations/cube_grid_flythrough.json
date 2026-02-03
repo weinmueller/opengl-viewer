@@ -1,0 +1,23 @@
+{
+    "name": "10x10 Cube Grid Flythrough",
+    "keyframes": [
+        { "time": 0.0,  "target": [0, 0, 0],     "distance": 60.0, "yaw": 45,   "pitch": 50,  "fov": 45 },
+        { "time": 3.0,  "target": [0, 0, 0],     "distance": 35.0, "yaw": 45,   "pitch": 30,  "fov": 50 },
+        { "time": 5.0,  "target": [-18, 0, -18], "distance": 8.0,  "yaw": 45,   "pitch": 15,  "fov": 60 },
+        { "time": 7.0,  "target": [-10, 0, -18], "distance": 6.0,  "yaw": 90,   "pitch": 5,   "fov": 70 },
+        { "time": 9.0,  "target": [10, 0, -18],  "distance": 6.0,  "yaw": 90,   "pitch": 5,   "fov": 70 },
+        { "time": 11.0, "target": [18, 0, -14],  "distance": 6.0,  "yaw": 180,  "pitch": 5,   "fov": 70 },
+        { "time": 13.0, "target": [10, 0, -10],  "distance": 6.0,  "yaw": 270,  "pitch": 5,   "fov": 70 },
+        { "time": 15.0, "target": [-10, 0, -10], "distance": 6.0,  "yaw": 270,  "pitch": 5,   "fov": 70 },
+        { "time": 17.0, "target": [-18, 0, -6],  "distance": 6.0,  "yaw": 180,  "pitch": 5,   "fov": 70 },
+        { "time": 19.0, "target": [-10, 0, -2],  "distance": 6.0,  "yaw": 90,   "pitch": 5,   "fov": 70 },
+        { "time": 21.0, "target": [10, 0, -2],   "distance": 6.0,  "yaw": 90,   "pitch": 5,   "fov": 70 },
+        { "time": 23.0, "target": [18, 0, 2],    "distance": 6.0,  "yaw": 180,  "pitch": 5,   "fov": 70 },
+        { "time": 25.0, "target": [0, 0, 6],     "distance": 6.0,  "yaw": 270,  "pitch": 5,   "fov": 70 },
+        { "time": 27.0, "target": [-14, 0, 10],  "distance": 6.0,  "yaw": 225,  "pitch": 10,  "fov": 65 },
+        { "time": 29.0, "target": [0, 0, 14],    "distance": 8.0,  "yaw": 180,  "pitch": 15,  "fov": 60 },
+        { "time": 31.0, "target": [14, 0, 18],   "distance": 10.0, "yaw": 135,  "pitch": 20,  "fov": 55 },
+        { "time": 34.0, "target": [0, 0, 0],     "distance": 45.0, "yaw": 225,  "pitch": 45,  "fov": 45 },
+        { "time": 38.0, "target": [0, 0, 0],     "distance": 60.0, "yaw": 45,   "pitch": 50,  "fov": 45 }
+    ]
+}

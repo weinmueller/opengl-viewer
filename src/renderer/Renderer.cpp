@@ -277,6 +277,8 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     toggles.hasSolution = m_multipatchManager && m_multipatchManager->hasSolution();
     toggles.isSolvingPoisson = m_multipatchManager && m_multipatchManager->isSolvingPoisson();
     toggles.canSolvePoisson = m_multipatchManager && m_multipatchManager->canSolvePoisson();
+    toggles.animationPlaying = m_animationPlaying;
+    toggles.animationLoaded = m_animationLoaded;
     toggles.renderedTriangles = m_renderedTriangles;
     toggles.originalTriangles = m_originalTriangles;
     toggles.lodSavingsPercent = getLODSavingsPercent();

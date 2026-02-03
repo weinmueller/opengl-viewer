@@ -72,3 +72,13 @@ void Camera::updateViewMatrix() {
     glm::vec3 position = getPosition();
     m_viewMatrix = glm::lookAt(position, m_target, glm::vec3(0.0f, 1.0f, 0.0f));
 }
+
+void Camera::setYawPitch(float yaw, float pitch) {
+    m_yaw = yaw;
+    m_pitch = glm::clamp(pitch, m_minPitch, m_maxPitch);
+
+    if (m_yaw > 360.0f) m_yaw -= 360.0f;
+    if (m_yaw < 0.0f) m_yaw += 360.0f;
+
+    updateViewMatrix();
+}

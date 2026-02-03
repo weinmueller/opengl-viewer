@@ -92,7 +92,8 @@ void Application::processInput() {
 }
 
 void Application::update(float deltaTime) {
-    (void)deltaTime;
+    // Update camera animation
+    m_cameraAnimation.update(deltaTime, m_camera);
 
     // Process completed subdivision tasks (GPU upload on main thread)
     m_subdivisionManager->processCompletedTasks();
@@ -126,6 +127,9 @@ void Application::update(float deltaTime) {
 }
 
 void Application::render() {
+    // Update animation state for help overlay
+    m_renderer->setAnimationState(m_cameraAnimation.isPlaying(), m_cameraAnimation.isLoaded());
+
     m_renderer->render(m_scene, m_camera, m_window->getAspectRatio());
 }
 
@@ -136,8 +140,10 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
         switch (key) {
             case GLFW_KEY_ESCAPE:
-                // Cancel active background tasks, or exit if idle
-                if (m_subdivisionManager->isBusy()) {
+                // Cancel animation, background tasks, or exit if idle
+                if (m_cameraAnimation.isPlaying()) {
+                    m_cameraAnimation.stop();
+                } else if (m_subdivisionManager->isBusy()) {
                     m_subdivisionManager->cancelAll();
                 } else if (m_multipatchManager->isSolvingPoisson()) {
                     m_multipatchManager->getPoissonManager()->cancelAll();
@@ -188,6 +194,10 @@ void Application::onKeyPressed(int key, int scancode, int action, int mods) {
                     // Start solving if BVP file and not already solving
                     m_multipatchManager->startPoissonSolving();
                 }
+                break;
+            case GLFW_KEY_A:
+                // Toggle camera animation
+                m_cameraAnimation.toggle();
                 break;
         }
     }
@@ -360,4 +370,8 @@ void Application::generateLODForObject(SceneObject* obj) {
 
     auto task = std::make_unique<LODTask>(obj, obj->getName(), meshData);
     m_lodManager->submitTask(std::move(task));
+}
+
+bool Application::loadAnimation(const std::string& path) {
+    return m_cameraAnimation.loadFromFile(path);
 }

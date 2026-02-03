@@ -129,6 +129,12 @@ target_include_directories(tinyobjloader INTERFACE
     ${CMAKE_SOURCE_DIR}/external/tinyobjloader
 )
 
+# nlohmann_json (header-only)
+add_library(nlohmann_json INTERFACE)
+target_include_directories(nlohmann_json INTERFACE
+    ${CMAKE_SOURCE_DIR}/external
+)
+
 # Collect source files
 file(GLOB_RECURSE SOURCES
     ${CMAKE_SOURCE_DIR}/src/*.cpp
@@ -150,6 +156,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glad
     glm
     tinyobjloader
+    nlohmann_json
     OpenMP::OpenMP_CXX
 )
 

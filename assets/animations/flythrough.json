@@ -1,0 +1,10 @@
+{
+    "name": "Cube Flythrough",
+    "keyframes": [
+        { "time": 0.0, "target": [-3, 0, -3], "distance": 4.0, "yaw": 45, "pitch": 20, "fov": 45 },
+        { "time": 2.0, "target": [0, 0, 0], "distance": 3.0, "yaw": 0, "pitch": 30, "fov": 50 },
+        { "time": 4.0, "target": [3, 0, -3], "distance": 4.0, "yaw": -45, "pitch": 20, "fov": 45 },
+        { "time": 6.0, "target": [3, 0, 3], "distance": 3.5, "yaw": -135, "pitch": 25, "fov": 55 },
+        { "time": 8.0, "target": [0, 1, 0], "distance": 6.0, "yaw": 180, "pitch": 35, "fov": 45 }
+    ]
+}
