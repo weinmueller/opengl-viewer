@@ -104,10 +104,11 @@ bool LODManager::applyTaskResult(LODTask& task) {
 }
 
 void LODManager::cancelActiveTask() {
-    // First call base implementation
+    // First call base implementation (cancels outer progress)
     TaskManager<LODTask>::cancelActiveTask();
 
-    // Additionally cancel the nested simplification progress
-    // Note: m_activeTask is not accessible here, so this is a no-op
-    // The simplificationProgress.cancel() is already handled in the destructor
+    // Also cancel the nested simplification progress so the inner loop exits promptly
+    if (auto* task = getActiveTask()) {
+        task->simplificationProgress.cancel();
+    }
 }

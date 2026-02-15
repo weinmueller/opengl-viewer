@@ -42,8 +42,8 @@ struct Progress {
     void setPhase(int p) {
         phase.store(p, std::memory_order_relaxed);
         phaseProgress.store(0.0f, std::memory_order_relaxed);
-        // Update total progress based on phase
-        float baseProgress = (p - 1) / static_cast<float>(totalPhases);
+        // Update total progress based on phase (clamp to avoid negative values for phase 0)
+        float baseProgress = (p <= 0) ? 0.0f : (p - 1) / static_cast<float>(totalPhases);
         totalProgress.store(baseProgress, std::memory_order_relaxed);
     }
 

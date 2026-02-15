@@ -2,7 +2,6 @@
 #include "GismoLoader.h"
 #include "async/TessellationTask.h"
 #include "async/PoissonTask.h"
-#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <algorithm>
 #include <cmath>
@@ -29,9 +28,22 @@ bool MultiPatchManager::load(const std::string& path, Scene& scene, int initialT
     if (fileData.has<gismo::gsMultiPatch<>>()) {
         m_multipatch = std::make_unique<gismo::gsMultiPatch<>>();
         fileData.getFirst(*m_multipatch);
-
         std::cout << "  Found MultiPatch with " << m_multipatch->nPatches() << " patches" << std::endl;
+    }
+    // Try single geometry - wrap into a single-patch multipatch
+    else if (fileData.has<gismo::gsGeometry<>>()) {
+        m_multipatch = std::make_unique<gismo::gsMultiPatch<>>();
+        auto geom = fileData.getFirst<gismo::gsGeometry<>>();
+        m_multipatch->addPatch(gismo::give(geom));
+        std::cout << "  Found single geometry, wrapping as 1-patch multipatch" << std::endl;
+    }
+    else {
+        std::cerr << "MultiPatchManager: No geometry found in " << path << std::endl;
+        return false;
+    }
 
+    // Process the multipatch (shared code for both single and multi-patch)
+    {
         // Extract filename for naming
         std::string baseName = path;
         size_t lastSlash = path.find_last_of("/\\");
@@ -87,18 +99,6 @@ bool MultiPatchManager::load(const std::string& path, Scene& scene, int initialT
         std::cout << "  Loaded " << m_patchObjects.size() << " patches" << std::endl;
         return true;
     }
-    // Try single geometry
-    else if (fileData.has<gismo::gsGeometry<>>()) {
-        m_multipatch = std::make_unique<gismo::gsMultiPatch<>>();
-        auto geom = fileData.getFirst<gismo::gsGeometry<>>();
-        m_multipatch->addPatch(gismo::give(geom));
-
-        // Recursively call to process as single-patch multipatch
-        return load(path, scene, initialTessLevel);
-    }
-
-    std::cerr << "MultiPatchManager: No geometry found in " << path << std::endl;
-    return false;
 #else
     (void)path;
     (void)scene;
@@ -115,9 +115,9 @@ void MultiPatchManager::updateTessellation(const Camera& camera, float aspectRat
         return;
     }
 
-    // Compute view-projection matrix
+    // Compute view-projection matrix using camera's actual projection (respects animated FOV)
     glm::mat4 view = camera.getViewMatrix();
-    glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
+    glm::mat4 proj = camera.getProjectionMatrix(aspectRatio);
     glm::mat4 viewProj = proj * view;
 
     for (PatchObject* patch : m_patchObjects) {

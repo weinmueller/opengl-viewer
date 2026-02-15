@@ -279,6 +279,7 @@ void TextRenderer::end() {
     glBindVertexArray(0);
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 }
 
 void TextRenderer::renderText(const std::string& text, float x, float y, float scale,

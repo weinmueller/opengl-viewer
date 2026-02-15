@@ -443,17 +443,53 @@ MeshData Subdivision::weldVertices(const MeshData& input, float epsilon) {
     for (size_t i = 0; i < input.vertices.size(); ++i) {
         const glm::vec3& pos = input.vertices[i].position;
 
+        float fx = pos.x * invEpsilon;
+        float fy = pos.y * invEpsilon;
+        float fz = pos.z * invEpsilon;
+
         PositionKey key{
-            static_cast<int>(std::round(pos.x * invEpsilon)),
-            static_cast<int>(std::round(pos.y * invEpsilon)),
-            static_cast<int>(std::round(pos.z * invEpsilon))
+            static_cast<int>(std::round(fx)),
+            static_cast<int>(std::round(fy)),
+            static_cast<int>(std::round(fz))
         };
 
+        // Check primary cell first
         auto it = positionMap.find(key);
         if (it != positionMap.end()) {
-            // Vertex at this position already exists, map to it
             vertexRemap[i] = it->second;
-        } else {
+            continue;
+        }
+
+        // Check neighboring cells for vertices near grid boundaries.
+        // A vertex near a cell boundary (fractional part close to 0.5) may have
+        // been quantized to an adjacent cell by a nearby vertex.
+        bool found = false;
+        int altX[] = { key.x, key.x };
+        int altY[] = { key.y, key.y };
+        int altZ[] = { key.z, key.z };
+        float fracX = fx - std::floor(fx);
+        float fracY = fy - std::floor(fy);
+        float fracZ = fz - std::floor(fz);
+        // If near the 0.5 boundary, also check the other side
+        if (fracX > 0.4f && fracX < 0.6f) { altX[1] = (fracX >= 0.5f) ? key.x - 1 : key.x + 1; }
+        if (fracY > 0.4f && fracY < 0.6f) { altY[1] = (fracY >= 0.5f) ? key.y - 1 : key.y + 1; }
+        if (fracZ > 0.4f && fracZ < 0.6f) { altZ[1] = (fracZ >= 0.5f) ? key.z - 1 : key.z + 1; }
+
+        for (int xi = 0; xi < 2 && !found; ++xi) {
+            for (int yi = 0; yi < 2 && !found; ++yi) {
+                for (int zi = 0; zi < 2 && !found; ++zi) {
+                    if (xi == 0 && yi == 0 && zi == 0) continue; // Already checked primary
+                    PositionKey altKey{ altX[xi], altY[yi], altZ[zi] };
+                    auto ait = positionMap.find(altKey);
+                    if (ait != positionMap.end()) {
+                        vertexRemap[i] = ait->second;
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        if (!found) {
             // New unique position
             uint32_t newIndex = static_cast<uint32_t>(output.vertices.size());
             output.vertices.push_back(input.vertices[i]);

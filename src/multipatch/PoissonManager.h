@@ -15,7 +15,7 @@ namespace gismo {
 class PoissonManager : public TaskManager<PoissonTask> {
 public:
     PoissonManager() = default;
-    ~PoissonManager() override = default;
+    ~PoissonManager() override { shutdown(); }
 
 #ifdef GISMO_AVAILABLE
     // Start solving Poisson equation

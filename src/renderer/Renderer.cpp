@@ -136,6 +136,7 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
     m_meshShader->setMat4("view", view);
     m_meshShader->setMat4("projection", projection);
     m_meshShader->setVec3("viewPos", camera.getPosition());
+    m_meshShader->setInt("diffuseMap", 0);  // Texture unit 0, constant for all objects
 
     // Main light
     m_meshShader->setVec3("light.direction", glm::normalize(m_light.direction));
@@ -254,8 +255,6 @@ void Renderer::render(const Scene& scene, const Camera& camera, float aspectRati
                 m_defaultTexture->bind(0);
             }
         }
-        m_meshShader->setInt("diffuseMap", 0);
-
         if (m_wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             meshToRender->draw();
@@ -317,7 +316,7 @@ int Renderer::pick(const Scene& scene, const Camera& camera, float aspectRatio, 
         }
 
         m_pickingShader->setMat4("model", obj->getModelMatrix());
-        glUniform1ui(glGetUniformLocation(m_pickingShader->getProgram(), "objectID"), objectID);
+        m_pickingShader->setUInt("objectID", objectID);
 
         obj->draw();
         ++objectID;

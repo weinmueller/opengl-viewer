@@ -37,6 +37,12 @@ Texture& Texture::operator=(Texture&& other) noexcept {
 }
 
 bool Texture::load(const std::string& path) {
+    // Clean up any previously loaded texture
+    if (m_textureID) {
+        glDeleteTextures(1, &m_textureID);
+        m_textureID = 0;
+    }
+
     // Load image data
     stbi_set_flip_vertically_on_load(true);
     int channels;

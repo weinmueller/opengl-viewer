@@ -10,6 +10,31 @@
 #include <atomic>
 #include <string>
 
+// Snapshot of progress values, safe to read after the lock is released
+struct ProgressSnapshot {
+    int phase{0};
+    float phaseProgress{0.0f};
+    float totalProgress{0.0f};
+    bool completed{false};
+    bool cancelled{false};
+    bool hasError{false};
+    int totalPhases{1};
+    const char* phaseName{"Processing..."};
+
+    static ProgressSnapshot fromProgress(const Progress& p) {
+        ProgressSnapshot snap;
+        snap.phase = p.phase.load(std::memory_order_relaxed);
+        snap.phaseProgress = p.phaseProgress.load(std::memory_order_relaxed);
+        snap.totalProgress = p.totalProgress.load(std::memory_order_relaxed);
+        snap.completed = p.completed.load(std::memory_order_relaxed);
+        snap.cancelled = p.cancelled.load(std::memory_order_relaxed);
+        snap.hasError = p.hasError.load(std::memory_order_relaxed);
+        snap.totalPhases = p.totalPhases;
+        snap.phaseName = p.getPhaseName();
+        return snap;
+    }
+};
+
 // Template base class for background task managers
 // TaskType must have:
 //   - Progress& getProgress()
@@ -23,24 +48,7 @@ public:
     }
 
     virtual ~TaskManager() {
-        // Signal shutdown
-        m_shutdown.store(true, std::memory_order_release);
-
-        // Cancel any active task
-        {
-            std::lock_guard<std::mutex> lock(m_activeMutex);
-            if (m_activeTask) {
-                cancelActiveTask();
-            }
-        }
-
-        // Wake up worker thread
-        m_queueCondition.notify_all();
-
-        // Wait for worker to finish
-        if (m_workerThread.joinable()) {
-            m_workerThread.join();
-        }
+        shutdown();
     }
 
     // Non-copyable, non-movable
@@ -111,11 +119,13 @@ public:
         return m_activeTask != nullptr;
     }
 
-    // Get progress of active task (for UI display)
-    // Returns nullptr if no active task
-    const Progress* getActiveProgress() const {
+    // Get a snapshot of the active task's progress (safe to use after call returns)
+    // Returns false if no active task
+    bool getActiveProgressSnapshot(ProgressSnapshot& snapshot) const {
         std::lock_guard<std::mutex> lock(m_activeMutex);
-        return m_activeTask ? &m_activeTask->getProgress() : nullptr;
+        if (!m_activeTask) return false;
+        snapshot = ProgressSnapshot::fromProgress(m_activeTask->getProgress());
+        return true;
     }
 
     // Get active task's object name (for UI display)
@@ -131,6 +141,28 @@ public:
     }
 
 protected:
+    // Call from derived class destructors to ensure clean shutdown
+    // before derived members are destroyed. Safe to call multiple times.
+    void shutdown() {
+        if (m_shutdown.load(std::memory_order_acquire)) return;
+
+        m_shutdown.store(true, std::memory_order_release);
+
+        // Cancel active task (non-virtual: just set the cancel flag)
+        {
+            std::lock_guard<std::mutex> lock(m_activeMutex);
+            if (m_activeTask) {
+                m_activeTask->getProgress().cancel();
+            }
+        }
+
+        m_queueCondition.notify_all();
+
+        if (m_workerThread.joinable()) {
+            m_workerThread.join();
+        }
+    }
+
     // Process a single task (implemented by derived class)
     virtual void processTask(TaskType& task) = 0;
 
@@ -139,11 +171,16 @@ protected:
     virtual bool applyTaskResult(TaskType& task) = 0;
 
     // Cancel the active task (can be overridden for additional cleanup)
+    // Called with m_activeMutex held — safe to access getActiveTask()
     virtual void cancelActiveTask() {
         if (m_activeTask) {
             m_activeTask->getProgress().cancel();
         }
     }
+
+    // Access the active task (only valid while m_activeMutex is held,
+    // i.e. from within cancelActiveTask() overrides)
+    TaskType* getActiveTask() const { return m_activeTask; }
 
 private:
     void workerLoop() {

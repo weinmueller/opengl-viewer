@@ -105,14 +105,13 @@ CameraKeyframe CameraAnimation::interpolate(float time) const {
     // Clamp time to valid range
     time = glm::clamp(time, 0.0f, m_duration);
 
-    // Find surrounding keyframes
-    size_t nextIdx = 0;
+    // Find the first keyframe at or after the current time
+    size_t nextIdx = m_keyframes.size(); // default: past the end
     for (size_t i = 0; i < m_keyframes.size(); ++i) {
         if (m_keyframes[i].time >= time) {
             nextIdx = i;
             break;
         }
-        nextIdx = i + 1;
     }
 
     // Handle edge cases

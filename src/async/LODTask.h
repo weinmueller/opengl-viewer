@@ -12,11 +12,11 @@ class SceneObject;
 // Phase names for progress display
 inline const char* LOD_PHASE_NAMES[] = {
     "Starting...",
-    "Generating LOD 1 (50%)",
-    "Generating LOD 2 (30%)",
-    "Generating LOD 3 (15%)",
-    "Generating LOD 4 (7%)",
-    "Generating LOD 5 (3%)",
+    "Generating LOD 1 (70%)",
+    "Generating LOD 2 (50%)",
+    "Generating LOD 3 (35%)",
+    "Generating LOD 4 (25%)",
+    "Generating LOD 5 (15%)",
     "Finalizing..."
 };
 

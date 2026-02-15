@@ -16,10 +16,12 @@ Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
     glAttachShader(m_program, vertexShader);
     glAttachShader(m_program, fragmentShader);
     glLinkProgram(m_program);
-    checkLinkErrors(m_program);
 
+    // Always clean up compiled shaders (they remain attached to the program)
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+
+    checkLinkErrors(m_program);
 }
 
 Shader::~Shader() {
@@ -88,6 +90,10 @@ void Shader::setBool(const std::string& name, bool value) const {
 
 void Shader::setInt(const std::string& name, int value) const {
     glUniform1i(getUniformLocation(name), value);
+}
+
+void Shader::setUInt(const std::string& name, unsigned int value) const {
+    glUniform1ui(getUniformLocation(name), value);
 }
 
 void Shader::setFloat(const std::string& name, float value) const {

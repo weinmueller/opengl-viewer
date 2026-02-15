@@ -7,6 +7,11 @@ void LODMesh::addLevel(LODLevel&& level) {
 void LODMesh::setLevels(std::vector<LODLevel>&& levels) {
     m_levels = std::move(levels);
     m_currentLOD = 0;
+
+    // Eagerly upload all LOD levels to GPU to avoid frame stalls on first LOD switch
+    for (auto& level : m_levels) {
+        level.ensureGPUMesh();
+    }
 }
 
 void LODMesh::clear() {

@@ -6,7 +6,7 @@
 class LODManager : public TaskManager<LODTask> {
 public:
     LODManager() = default;
-    ~LODManager() override = default;
+    ~LODManager() override { shutdown(); }
 
 protected:
     // Process a LOD generation task (runs on worker thread)

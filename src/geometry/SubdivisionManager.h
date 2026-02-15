@@ -6,7 +6,7 @@
 class SubdivisionManager : public TaskManager<SubdivisionTask> {
 public:
     SubdivisionManager() = default;
-    ~SubdivisionManager() override = default;
+    ~SubdivisionManager() override { shutdown(); }
 
 protected:
     // Process a subdivision task (runs on worker thread)

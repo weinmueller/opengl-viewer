@@ -15,7 +15,9 @@ namespace {
             size_t h4 = std::hash<float>()(v.normal.x);
             size_t h5 = std::hash<float>()(v.normal.y);
             size_t h6 = std::hash<float>()(v.normal.z);
-            return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3) ^ (h5 << 4) ^ (h6 << 5);
+            size_t h7 = std::hash<float>()(v.texCoord.x);
+            size_t h8 = std::hash<float>()(v.texCoord.y);
+            return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3) ^ (h5 << 4) ^ (h6 << 5) ^ (h7 << 6) ^ (h8 << 7);
         }
     };
 
@@ -104,12 +106,11 @@ bool ObjLoader::load(const std::string& path, MeshData& outData) {
                 vertex.texCoord = glm::vec2(0.0f);
             }
 
-            if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<uint32_t>(outData.vertices.size());
+            auto [it, inserted] = uniqueVertices.emplace(vertex, static_cast<uint32_t>(outData.vertices.size()));
+            if (inserted) {
                 outData.vertices.push_back(vertex);
             }
-
-            outData.indices.push_back(uniqueVertices[vertex]);
+            outData.indices.push_back(it->second);
         }
     }
 

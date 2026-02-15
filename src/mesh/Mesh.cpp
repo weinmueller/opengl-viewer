@@ -33,8 +33,8 @@ Mesh& Mesh::operator=(Mesh&& other) noexcept {
         cleanupBufferSet(m_buffers[0]);
         cleanupBufferSet(m_buffers[1]);
 
-        m_buffers[0] = other.m_buffers[0];
-        m_buffers[1] = other.m_buffers[1];
+        m_buffers[0] = std::move(other.m_buffers[0]);
+        m_buffers[1] = std::move(other.m_buffers[1]);
         m_writeIndex = other.m_writeIndex;
         m_readIndex = other.m_readIndex;
         m_vertexCount = other.m_vertexCount;
@@ -135,9 +135,10 @@ void Mesh::uploadAsync(const MeshData& data) {
     int writeIdx = (m_readIndex + 1) % 2;
     BufferSet& buf = m_buffers[writeIdx];
 
-    // If there's a previous pending upload on this buffer, wait for it
+    // If there's a previous pending upload on this buffer, wait briefly for it
     if (buf.fence) {
-        glClientWaitSync(buf.fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+        // Wait up to 5ms — if GPU is still busy, we'll just recreate the buffer
+        glClientWaitSync(buf.fence, GL_SYNC_FLUSH_COMMANDS_BIT, 5000000ULL); // 5ms in nanoseconds
         glDeleteSync(buf.fence);
         buf.fence = nullptr;
     }

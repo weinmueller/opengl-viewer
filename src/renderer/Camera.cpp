@@ -34,10 +34,10 @@ void Camera::orbit(float deltaX, float deltaY) {
 }
 
 void Camera::pan(float deltaX, float deltaY) {
-    glm::vec3 position = getPosition();
-    glm::vec3 forward = glm::normalize(m_target - position);
-    glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0f, 1.0f, 0.0f)));
-    glm::vec3 up = glm::normalize(glm::cross(right, forward));
+    // Extract right and up vectors from the view matrix to avoid
+    // degenerate cross product when looking nearly straight up/down
+    glm::vec3 right(m_viewMatrix[0][0], m_viewMatrix[1][0], m_viewMatrix[2][0]);
+    glm::vec3 up(m_viewMatrix[0][1], m_viewMatrix[1][1], m_viewMatrix[2][1]);
 
     float panScale = m_distance * m_panSensitivity;
     m_target += right * (-deltaX * panScale);

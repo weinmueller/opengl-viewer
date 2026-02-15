@@ -41,7 +41,7 @@ public:
     bool isBusy() const { return m_tessManager.isBusy(); }
 
     // Get progress info for UI
-    const Progress* getActiveProgress() const { return m_tessManager.getActiveProgress(); }
+    bool getActiveProgressSnapshot(ProgressSnapshot& snapshot) const { return m_tessManager.getActiveProgressSnapshot(snapshot); }
     std::string getActiveObjectName() const { return m_tessManager.getActiveObjectName(); }
     size_t getQueuedTaskCount() const { return m_tessManager.getQueuedTaskCount(); }
 

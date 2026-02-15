@@ -47,42 +47,39 @@ void ProgressOverlay::render(int screenWidth, int screenHeight,
     std::string phaseName;
     size_t queuedCount = 0;
     std::string taskType;
+    ProgressSnapshot snapshot;
 
     if (subdivBusy) {
-        const Progress* progress = subdivManager->getActiveProgress();
-        if (!progress) return;
+        if (!subdivManager->getActiveProgressSnapshot(snapshot)) return;
 
         objectName = subdivManager->getActiveObjectName();
-        totalProgress = progress->totalProgress.load(std::memory_order_relaxed);
-        phaseName = progress->getPhaseName();
+        totalProgress = snapshot.totalProgress;
+        phaseName = snapshot.phaseName;
         queuedCount = subdivManager->getQueuedTaskCount();
         taskType = "Subdividing";
     } else if (lodBusy) {
-        const Progress* progress = lodManager->getActiveProgress();
-        if (!progress) return;
+        if (!lodManager->getActiveProgressSnapshot(snapshot)) return;
 
         objectName = lodManager->getActiveObjectName();
-        totalProgress = progress->totalProgress.load(std::memory_order_relaxed);
-        phaseName = progress->getPhaseName();
+        totalProgress = snapshot.totalProgress;
+        phaseName = snapshot.phaseName;
         queuedCount = lodManager->getQueuedTaskCount();
         taskType = "Generating LOD";
     } else if (poissonBusy) {
         const PoissonManager* poissonMgr = multipatchManager->getPoissonManager();
-        const Progress* progress = poissonMgr->getActiveProgress();
-        if (!progress) return;
+        if (!poissonMgr->getActiveProgressSnapshot(snapshot)) return;
 
         objectName = poissonMgr->getActiveObjectName();
-        totalProgress = progress->totalProgress.load(std::memory_order_relaxed);
-        phaseName = progress->getPhaseName();
+        totalProgress = snapshot.totalProgress;
+        phaseName = snapshot.phaseName;
         queuedCount = poissonMgr->getQueuedTaskCount();
         taskType = "Solving Poisson";
     } else if (tessBusy) {
-        const Progress* progress = multipatchManager->getActiveProgress();
-        if (!progress) return;
+        if (!multipatchManager->getActiveProgressSnapshot(snapshot)) return;
 
         objectName = multipatchManager->getActiveObjectName();
-        totalProgress = progress->totalProgress.load(std::memory_order_relaxed);
-        phaseName = progress->getPhaseName();
+        totalProgress = snapshot.totalProgress;
+        phaseName = snapshot.phaseName;
         queuedCount = multipatchManager->getQueuedTaskCount();
         taskType = "Tessellating";
     }
